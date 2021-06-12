@@ -222,12 +222,17 @@ export default function Home() {
     }
   };
 
-  checar_comentarios();
-  checar_inscritos();
-  checar_nomes();
-  checar_likes();
-  atribuir_tickets();
-  checar_vip();
+  
+
+  const executar_tudo = () => {
+    checar_comentarios();
+    checar_inscritos();
+    checar_nomes();
+    checar_likes();
+    atribuir_tickets();
+    checar_vip();
+
+  }
 
   console.log("*******usuarios*******", usuarios);
 
@@ -248,11 +253,8 @@ export default function Home() {
 
       <main>
         <h1>Sorteador</h1>
-        <button onClick={checar_nomes}>checar nomes</button>
-        <button onClick={checar_likes}>checar likes</button>
-        <button onClick={atribuir_tickets}>checar tickets</button>
-        <button onClick={checar_vip}>checar vip</button>
-        <p>{usuarios}</p>
+        <button onClick={executar_tudo}>executar tudo</button>
+        <p>{usuarios.map((usuario) => usuario.nome + ", " )}</p>
       </main>
 
       <footer></footer>
