@@ -86,7 +86,7 @@ export default function Home() {
           nome_valido: false,
           mensagem: [],
         };
-        usuario_estruturado.mensagem.push("Não comentou");
+        usuario_estruturado.mensagem.push("Não comentou. ");
         set_usuarios((old_usuarios) => [...old_usuarios, usuario_estruturado]);
       } else {
         let usuarios_tmp = [...usuarios];
@@ -109,7 +109,7 @@ export default function Home() {
         asterisco_regex.test(usuario.nome)
       ) {
         usuarios_tmp[indice].nome_valido = false;
-        usuarios_tmp[indice].mensagem.push("Nome inválido");
+        usuarios_tmp[indice].mensagem.push("Nome inválido. ");
         set_usuarios(usuarios_tmp);
       } else {
         usuarios_tmp[indice].nome_valido = true;
@@ -129,7 +129,7 @@ export default function Home() {
       );
 
       if (!usuario.segue) {
-        usuarios_tmp[indice].mensagem.push("Não segue");
+        usuarios_tmp[indice].mensagem.push("Não segue. ");
       }
 
       let deu_like = false;
@@ -150,7 +150,7 @@ export default function Home() {
         usuarios_tmp[indice].deu_like = true;
       } else {
         usuarios_tmp[indice].deu_like = false;
-        usuarios_tmp[indice].mensagem.push("Não deu like nos últimos 100 vídeos.");
+        usuarios_tmp[indice].mensagem.push("Não deu like nos últimos 100 vídeos. ");
       }
       set_usuarios(usuarios_tmp);
     }
@@ -195,7 +195,7 @@ export default function Home() {
         vip_estruturado.mensagem.push(
           "Fez doação mas" +
             " não completou todas as tarefas." +
-            " Nenhum ticket adicionado."
+            " Nenhum ticket adicionado. "
         );
         set_usuarios(old_usuarios => [...old_usuarios, vip_estruturado]);
       } else {
@@ -214,7 +214,7 @@ export default function Home() {
           usuarios_tmp[indice].mensagem.push(
             "Fez doação mas" +
               " não completou todas as tarefas." +
-              " Nenhum ticket adicionado."
+              " Nenhum ticket adicionado. "
           );
           set_usuarios(usuarios_tmp);          
         }
@@ -241,8 +241,8 @@ export default function Home() {
       <Head>
         <title>Sorteador</title>
         <meta
-          name="Sorteador com peso"
-          content="Utilitário para sorteios com peso"
+          name="description"
+          content="Sorteador | Utilitário para sorteios com peso"
         />
         <link
           about="icon from freepik and flaticon"
@@ -254,7 +254,7 @@ export default function Home() {
       <main>
         <h1>Sorteador</h1>
         <button onClick={executar_tudo}>executar tudo</button>
-        <p>{usuarios.map((usuario) => usuario.nome + ", " )}</p>
+        <p>{usuarios.map((usuario) => <p> {`${usuario.nome} ${usuario.mensagem}`} </p>, <br/> )}</p>
       </main>
 
       <footer></footer>
