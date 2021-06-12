@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 import axios from "axios";
 import { Chance } from "chance";
 
@@ -5,7 +7,7 @@ import Head from "next/head";
 
 export default function Home() {
   console.log("iniciando API");
-  let usuarios = [];
+  const [usuarios, set_usuarios] = useState([]);
   const video_id = "27716306792649728";
   const email_regex = new RegExp(/^[a-z0-9.]+@[a-z0-9]+.[a-z]+.([a-z]+)?$/i);
   const asterisco_regex = new RegExp(/\*\*/);
@@ -43,9 +45,15 @@ export default function Home() {
           nome_valido: false,
           mensagem: [],
         };
-        usuarios.push(comentador_estruturado);
+        set_usuarios((old_usuarios) => [
+          ...old_usuarios,
+          comentador_estruturado,
+        ]);
       } else {
-        usuarios[indice].comentou = true;
+        let usuarios_tmp = [...usuarios];
+        usuarios_tmp[indice].comentou = true;
+        set_usuarios(usuarios_tmp);
+
       }
     }
   };
@@ -79,9 +87,11 @@ export default function Home() {
           mensagem: [],
         };
         usuario_estruturado.mensagem.push("Não comentou");
-        usuarios.push(usuario_estruturado);
+        set_usuarios((old_usuarios) => [...old_usuarios, usuario_estruturado]);
       } else {
-        usuarios[indice].segue = true;
+        let usuarios_tmp = [...usuarios];
+        usuarios_tmp[indice].segue = true;
+        set_usuarios(usuarios_tmp);
       }
     }
   };
@@ -91,27 +101,35 @@ export default function Home() {
     console.log(usuarios);
 
     for (const usuario of usuarios) {
+      let usuarios_tmp = [...usuarios];
+      const indice = usuarios.indexOf(usuario);
+      
       if (
         email_regex.test(usuario.nome) ||
         asterisco_regex.test(usuario.nome)
       ) {
-        usuario.nome_valido = false;
-        usuario.mensagem.push("Nome inválido");
+        usuarios_tmp[indice].nome_valido = false;
+        usuarios_tmp[indice].mensagem.push("Nome inválido");
+        set_usuarios(usuarios_tmp);
       } else {
-        usuario.nome_valido = true;
+        usuarios_tmp[indice].nome_valido = true;
+        set_usuarios(usuarios_tmp);
       }
     }
   };
 
   const checar_likes = async () => {
     for (const usuario of usuarios) {
+      const usuarios_tmp = usuarios;
+      const indice = usuarios.indexOf(usuario);
+
       console.log(
         `Apurando like de ${usuario.nome} ` +
           `| ${usuarios.indexOf(usuario) + 1} de ${usuarios.length} `
       );
 
       if (!usuario.segue) {
-        usuario.mensagem.push("Não segue");
+        usuarios_tmp[indice].mensagem.push("Não segue");
       }
 
       let deu_like = false;
@@ -129,11 +147,12 @@ export default function Home() {
         }
 
       if (deu_like) {
-        usuario.deu_like = true;
+        usuarios_tmp[indice].deu_like = true;
       } else {
-        usuario.deu_like = false;
-        usuario.mensagem.push("Não deu like nos últimos 100 vídeos.");
+        usuarios_tmp[indice].deu_like = false;
+        usuarios_tmp[indice].mensagem.push("Não deu like nos últimos 100 vídeos.");
       }
+      set_usuarios(usuarios_tmp);
     }
   };
 
@@ -178,7 +197,7 @@ export default function Home() {
             " não completou todas as tarefas." +
             " Nenhum ticket adicionado."
         );
-        usuarios.push(vip_estruturado);
+        set_usuarios(old_usuarios => [...old_usuarios, vip_estruturado]);
       } else {
         const condicoes =
           usuarios[indice].segue &&
@@ -187,13 +206,17 @@ export default function Home() {
           usuarios[indice].nome_valido;
 
         if (condicoes) {
-          usuarios[indice]["tickets"] += parseInt(vip.score);
+          let usuarios_tmp = [...usuarios];
+          usuarios_tmp[indice].tickets += parseInt(vip.score);
+          set_usuarios(usuarios_tmp);
         } else {
-          usuarios[indice].mensagem.push(
+          let usuarios_tmp = [...usuarios];
+          usuarios_tmp[indice].mensagem.push(
             "Fez doação mas" +
               " não completou todas as tarefas." +
               " Nenhum ticket adicionado."
           );
+          set_usuarios(usuarios_tmp);          
         }
       }
     }
