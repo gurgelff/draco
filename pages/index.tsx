@@ -6,7 +6,6 @@ import { Chance } from "chance";
 import Head from "next/head";
 
 export default function Home() {
-  console.log("iniciando API");
   const [usuarios, set_usuarios] = useState([]);
   const video_id = "27716306792649728";
   const email_regex = new RegExp(/^[a-z0-9.]+@[a-z0-9]+.[a-z]+.([a-z]+)?$/i);
@@ -56,6 +55,10 @@ export default function Home() {
 
       }
     }
+
+    return new Promise((resolve, reject) => {
+      resolve("ok");
+    });
   };
 
   const checar_inscritos = async () => {
@@ -94,6 +97,10 @@ export default function Home() {
         set_usuarios(usuarios_tmp);
       }
     }
+
+    return new Promise((resolve, reject) => {
+      resolve("ok");
+    });
   };
 
   const checar_nomes = () => {
@@ -116,6 +123,10 @@ export default function Home() {
         set_usuarios(usuarios_tmp);
       }
     }
+    
+    return new Promise((resolve, reject) => {
+      resolve("ok");
+    });
   };
 
   const checar_likes = async () => {
@@ -138,7 +149,6 @@ export default function Home() {
           id: usuario.id,
         },
       });
-      console.log("------------------------------", resposta_like);
 
       for (const video of resposta_like.data.data.list)
         if (String(video.id) == String(video_id)) {
@@ -154,9 +164,14 @@ export default function Home() {
       }
       set_usuarios(usuarios_tmp);
     }
+    
+    return new Promise((resolve, reject) => {
+      resolve("ok");
+    });
   };
 
   const atribuir_tickets = () => {
+    console.log("atribuindo tickets...");
     for (const usuario of usuarios) {
       const condicoes =
         usuario.segue &&
@@ -166,9 +181,14 @@ export default function Home() {
 
       if (condicoes) usuario.tickets = 1;
     }
+    
+    return new Promise((resolve, reject) => {
+      resolve("ok");
+    });
   };
 
   const checar_vip = async () => {
+    console.log("checando gift votes...");
     const resposta_gift_votes = await get_gift_votes();
 
     for (const vip of resposta_gift_votes.data.data.reward_rank) {
@@ -220,21 +240,26 @@ export default function Home() {
         }
       }
     }
+    
+    return new Promise((resolve, reject) => {
+      resolve("ok");
+    });
   };
 
   
 
-  const executar_tudo = () => {
-    checar_comentarios();
-    checar_inscritos();
-    checar_nomes();
-    checar_likes();
-    atribuir_tickets();
-    checar_vip();
-
+  const executar_tudo = async () => {
+    console.log("iniciando API");
+    await checar_comentarios();
+    await checar_inscritos();
+    await checar_nomes();
+    await checar_likes();
+    await atribuir_tickets();
+    await checar_vip();
+    console.log("usuarios usuarios", usuarios);
   }
 
-  console.log("*******usuarios*******", usuarios);
+  
 
   return (
     <div>
@@ -254,7 +279,7 @@ export default function Home() {
       <main>
         <h1>Sorteador</h1>
         <button onClick={executar_tudo}>executar tudo</button>
-        <p>{usuarios.map((usuario) => <p> {`${usuario.nome} ${usuario.mensagem}`} </p>, <br/> )}</p>
+        <>{usuarios.map((usuario) => <p key={usuario.id}> {`${usuario.nome} ${usuario.mensagem}`} </p>, <br/> )}</>
       </main>
 
       <footer></footer>
