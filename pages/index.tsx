@@ -7,10 +7,6 @@ import Head from "next/head";
 
 export default function Home() {
   let usuarios_dados = []
-  //@TODO: substituir todas as evaluações do estado
-  //       de usuarios para usuarios_dados, de modo
-  //       que o estado seja alterado apenas ao final,
-  //       pois o usestate é assícrono.
 
   const [usuarios, set_usuarios] = useState([]);
   const video_id = "27716306792649728";
@@ -34,10 +30,10 @@ export default function Home() {
             let ja_existe = false;
             let indice = 0;
 
-            for (let usuario of usuarios) {
+            for (let usuario of usuarios_dados) {
               if (comentador.uid == usuario.id) {
                 ja_existe = true;
-                indice = usuarios.indexOf(usuario);
+                indice = usuarios_dados.indexOf(usuario);
               }
             }
 
@@ -53,18 +49,13 @@ export default function Home() {
                 nome_valido: false,
                 mensagem: [],
               };
-              set_usuarios((old_usuarios) => [
-                comentador_estruturado,
-                ...old_usuarios,
-              ]);
+              usuarios_dados.push(comentador_estruturado);
             } else {
-              let usuarios_tmp = [...usuarios];
-              usuarios_tmp[indice].comentou = true;
-              set_usuarios(usuarios_tmp);
+              usuarios_dados[indice].comentou = true;
             }
           }
-          console.log("user comments ", usuarios);
-          resolve(usuarios);
+          console.log("user comments ", usuarios_dados);
+          resolve(usuarios_dados);
         } catch (error) {
           reject(error);
         }
@@ -84,10 +75,10 @@ export default function Home() {
              let ja_existe = false;
              let indice = 0;
 
-             for (let usuario of usuarios) {
+             for (let usuario of usuarios_dados) {
                if (inscrito.uid == usuario.id) {
                  ja_existe = true;
-                 indice = usuarios.indexOf(usuario);
+                 indice = usuarios_dados.indexOf(usuario);
                }
              }
 
@@ -104,18 +95,13 @@ export default function Home() {
                  mensagem: [],
                };
                usuario_estruturado.mensagem.push("Não comentou. ");
-               set_usuarios((old_usuarios) => [
-                 usuario_estruturado,
-                 ...old_usuarios,
-               ]);
+               usuarios_dados.push(usuario_estruturado);
              } else {
-               let usuarios_tmp = [...usuarios];
-               usuarios_tmp[indice].segue = true;
-               set_usuarios(usuarios_tmp);
+               usuarios_dados[indice].segue = true;
              }
            }
-           console.log("user subs ", usuarios);
-           resolve(usuarios);
+           console.log("user subs ", usuarios_dados);
+           resolve(usuarios_dados);
 
          } catch (error) {
            reject(error);
@@ -132,25 +118,22 @@ export default function Home() {
       try {
         console.log("checando nomes...");
 
-        for (const usuario of usuarios) {
-          let usuarios_tmp = [...usuarios];
-          const indice = usuarios.indexOf(usuario);
+        for (const usuario of usuarios_dados) {
+          const indice = usuarios_dados.indexOf(usuario);
 
           if (
             email_regex.test(usuario.nome) ||
             asterisco_regex.test(usuario.nome)
           ) {
-            usuarios_tmp[indice].nome_valido = false;
-            usuarios_tmp[indice].mensagem.push("Nome inválido. ");
-            set_usuarios(usuarios_tmp);
+            usuarios_dados[indice].nome_valido = false;
+            usuarios_dados[indice].mensagem.push("Nome inválido. ");
           } else {
-            usuarios_tmp[indice].nome_valido = true;
-            set_usuarios(usuarios_tmp);
+            usuarios_dados[indice].nome_valido = true;
           }
         }
-        console.log("user names ", usuarios);
+        console.log("user names ", usuarios_dados);
 
-        resolve(usuarios);
+        resolve(usuarios_dados);
 
       } catch (error) {
         reject(error);
@@ -162,22 +145,23 @@ export default function Home() {
   };
 
   const checar_likes = () => {
-    console.log("likes, usuarios = ", usuarios);
+    console.log("likes, usuarios = ", usuarios_dados);
 
     return new Promise((resolve, reject) => {
       (async () => {
         try {
-          for (const usuario of usuarios) {
-            const usuarios_tmp = usuarios;
-            const indice = usuarios.indexOf(usuario);
+          for (const usuario of usuarios_dados) {
+            const indice = usuarios_dados.indexOf(usuario);
 
             console.log(
               `Apurando like de ${usuario.nome} ` +
-                `| ${usuarios.indexOf(usuario) + 1} de ${usuarios.length} `
+                `| ${usuarios_dados.indexOf(usuario) + 1} de ${
+                  usuarios_dados.length
+                } `
             );
 
             if (!usuario.segue) {
-              usuarios_tmp[indice].mensagem.push("Não segue. ");
+              usuarios_dados[indice].mensagem.push("Não segue. ");
             }
 
             let deu_like = false;
@@ -194,16 +178,15 @@ export default function Home() {
               }
 
             if (deu_like) {
-              usuarios_tmp[indice].deu_like = true;
+              usuarios_dados[indice].deu_like = true;
             } else {
-              usuarios_tmp[indice].deu_like = false;
-              usuarios_tmp[indice].mensagem.push(
+              usuarios_dados[indice].deu_like = false;
+              usuarios_dados[indice].mensagem.push(
                 "Não deu like nos últimos 100 vídeos. "
               );
             }
-            set_usuarios(usuarios_tmp);
           }
-          resolve(usuarios); 
+          resolve(usuarios_dados); 
         } catch (error) {
           reject(error);
         }       
@@ -217,7 +200,7 @@ export default function Home() {
     return new Promise((resolve, reject) => {
       try {
         console.log("atribuindo tickets...");
-        for (const usuario of usuarios) {
+        for (const usuario of usuarios_dados) {
           const condicoes =
             usuario.segue &&
             usuario.deu_like &&
@@ -226,7 +209,7 @@ export default function Home() {
 
           if (condicoes) usuario.tickets = 1;
         }
-        resolve(usuarios);
+        resolve(usuarios_dados);
         
       } catch (error) {
         reject(error);
@@ -247,10 +230,10 @@ export default function Home() {
             let ja_existe = false;
             let indice = 0;
 
-            for (const usuario of usuarios) {
+            for (const usuario of usuarios_dados) {
               if (vip.uid == String(usuario.id)) {
                 ja_existe = true;
-                indice = usuarios.indexOf(usuario);
+                indice = usuarios_dados.indexOf(usuario);
               }
             }
 
@@ -270,33 +253,26 @@ export default function Home() {
                   " não completou todas as tarefas." +
                   " Nenhum ticket adicionado. "
               );
-              set_usuarios((old_usuarios) => [
-                vip_estruturado,
-                ...old_usuarios,
-              ]);
+              usuarios_dados.push(vip_estruturado);
             } else {
               const condicoes =
-                usuarios[indice].segue &&
-                usuarios[indice].deu_like &&
-                usuarios[indice].comentou &&
-                usuarios[indice].nome_valido;
+                usuarios_dados[indice].segue &&
+                usuarios_dados[indice].deu_like &&
+                usuarios_dados[indice].comentou &&
+                usuarios_dados[indice].nome_valido;
 
               if (condicoes) {
-                let usuarios_tmp = [...usuarios];
-                usuarios_tmp[indice].tickets += parseInt(vip.score);
-                set_usuarios(usuarios_tmp);
+                usuarios_dados[indice].tickets += parseInt(vip.score);
               } else {
-                let usuarios_tmp = [...usuarios];
-                usuarios_tmp[indice].mensagem.push(
+                usuarios_dados[indice].mensagem.push(
                   "Fez doação mas" +
                     " não completou todas as tarefas." +
                     " Nenhum ticket adicionado. "
                 );
-                set_usuarios(usuarios_tmp);
               }
             }
           }
-          resolve(usuarios);
+          resolve(usuarios_dados);
           
         } catch (error) {
           reject(error);
@@ -314,10 +290,11 @@ export default function Home() {
     await checar_likes();
     await atribuir_tickets();
     await checar_vip();
+    set_usuarios(usuarios_dados);
   };
 
   const mostrar_usuarios = () => {
-    console.log("usuarios usuarios", usuarios);
+    console.log("usuarios", usuarios);
   };
 
   return (
@@ -341,7 +318,11 @@ export default function Home() {
         <>
           {usuarios.map(
             (usuario) => (
-              <p key={usuario.id}>{`${usuario.nome} ${usuario.mensagem}`}</p>
+              <div key={usuario.id}>
+                <p >{`${usuario.nome}`}</p>
+                <p>{`${usuario.mensagem}`}</p>
+              </div>
+              
             ),
             <br />
           )}
