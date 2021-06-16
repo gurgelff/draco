@@ -9,7 +9,7 @@ const post_comentarios = {
     order_by: "like_count",
     sort: "DESC",
     page: "1",
-    pagesize: "999"
+    pagesize: "999" //999
 };
 
 const handler = nc()

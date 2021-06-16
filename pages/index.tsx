@@ -6,9 +6,10 @@ import { Chance } from "chance";
 import Head from "next/head";
 
 export default function Home() {
-  let usuarios_dados = []
+  let usuarios_dados = [];
 
   const [usuarios, set_usuarios] = useState([]);
+  const [sorteados_final, set_sorteados_final] = useState([]);
   const video_id = "27716306792649728";
   const email_regex = new RegExp(/^[a-z0-9.]+@[a-z0-9]+.[a-z]+.([a-z]+)?$/i);
   const asterisco_regex = new RegExp(/\*\*/);
@@ -66,50 +67,46 @@ export default function Home() {
   const checar_inscritos = () => {
     return new Promise((resolve, reject) => {
       (async () => {
-         try {
-           console.log("obtendo inscritos...");
-           const dados_comentarios = await get_inscritos();
-           const lista_de_inscritos = dados_comentarios.data.data.list;
+        try {
+          console.log("obtendo inscritos...");
+          const dados_comentarios = await get_inscritos();
+          const lista_de_inscritos = dados_comentarios.data.data.list;
 
-           for (const inscrito of lista_de_inscritos) {
-             let ja_existe = false;
-             let indice = 0;
+          for (const inscrito of lista_de_inscritos) {
+            let ja_existe = false;
+            let indice = 0;
 
-             for (let usuario of usuarios_dados) {
-               if (inscrito.uid == usuario.id) {
-                 ja_existe = true;
-                 indice = usuarios_dados.indexOf(usuario);
-               }
-             }
+            for (let usuario of usuarios_dados) {
+              if (inscrito.uid == usuario.id) {
+                ja_existe = true;
+                indice = usuarios_dados.indexOf(usuario);
+              }
+            }
 
-             if (!ja_existe) {
-               let usuario_estruturado = {
-                 nome: inscrito.nickname,
-                 conta: "",
-                 id: inscrito.uid,
-                 tickets: 0,
-                 segue: true,
-                 deu_like: false,
-                 comentou: false,
-                 nome_valido: false,
-                 mensagem: [],
-               };
-               usuario_estruturado.mensagem.push("Não comentou. ");
-               usuarios_dados.push(usuario_estruturado);
-             } else {
-               usuarios_dados[indice].segue = true;
-             }
-           }
-           console.log("user subs ", usuarios_dados);
-           resolve(usuarios_dados);
-
-         } catch (error) {
-           reject(error);
-           
-         }
-         
-       })();
-      
+            if (!ja_existe) {
+              let usuario_estruturado = {
+                nome: inscrito.nickname,
+                conta: "",
+                id: inscrito.uid,
+                tickets: 0,
+                segue: true,
+                deu_like: false,
+                comentou: false,
+                nome_valido: false,
+                mensagem: [],
+              };
+              usuario_estruturado.mensagem.push("Não comentou. ");
+              usuarios_dados.push(usuario_estruturado);
+            } else {
+              usuarios_dados[indice].segue = true;
+            }
+          }
+          console.log("user subs ", usuarios_dados);
+          resolve(usuarios_dados);
+        } catch (error) {
+          reject(error);
+        }
+      })();
     });
   };
 
@@ -134,13 +131,9 @@ export default function Home() {
         console.log("user names ", usuarios_dados);
 
         resolve(usuarios_dados);
-
       } catch (error) {
         reject(error);
-        
       }
-
-      
     });
   };
 
@@ -152,6 +145,11 @@ export default function Home() {
         try {
           for (const usuario of usuarios_dados) {
             const indice = usuarios_dados.indexOf(usuario);
+            if (!usuario.comentou) {
+              usuarios_dados[indice].mensagem
+                .push("Like não apurado por não ter comentado.");
+              continue;
+            }
 
             console.log(
               `Apurando like de ${usuario.nome} ` +
@@ -186,13 +184,11 @@ export default function Home() {
               );
             }
           }
-          resolve(usuarios_dados); 
+          resolve(usuarios_dados);
         } catch (error) {
           reject(error);
-        }       
+        }
       })();
-      
-      
     });
   };
 
@@ -207,15 +203,16 @@ export default function Home() {
             usuario.comentou &&
             usuario.nome_valido;
 
-          if (condicoes) usuario.tickets = 1;
+          if (condicoes) {
+            const indice = usuarios_dados.indexOf(usuario);
+            usuarios_dados[indice].tickets = 1;
+            usuarios_dados[indice].mensagem.push("Ok.");
+          }
         }
         resolve(usuarios_dados);
-        
       } catch (error) {
         reject(error);
-        
       }
-      
     });
   };
 
@@ -273,12 +270,10 @@ export default function Home() {
             }
           }
           resolve(usuarios_dados);
-          
         } catch (error) {
           reject(error);
         }
       })();
-      
     });
   };
 
@@ -295,6 +290,45 @@ export default function Home() {
 
   const mostrar_usuarios = () => {
     console.log("usuarios", usuarios);
+  };
+
+  const sortear = () => {
+    const quantidade_de_sorteados = 20;
+    let candidatos = [];
+    let pesos = [];
+    let sorteados = [];
+    let candidatos_elegiveis = 0;
+
+    const offline = false;
+
+    if (offline) {
+      // @TODO: lógica de pegar os dados a partir do arquivo
+      console.log("offline");
+    }
+
+    for (const usuario of usuarios) {
+      candidatos.push(usuario);
+      pesos.push(usuario.tickets);
+
+      if (usuario.tickets > 0) {
+        candidatos_elegiveis += 1;
+      }
+    }
+
+    const chance = Chance();
+
+    if (quantidade_de_sorteados > candidatos_elegiveis) {
+      alert("Número de sorteados é maior do que a lista de candidatos");
+      throw Error("Valor muito alto");
+    }
+
+    while (true) {
+      const sorteado = chance.weighted(candidatos, pesos);
+      if (!sorteados.includes(sorteado)) sorteados.push(sorteado);
+      if (sorteados.length >= quantidade_de_sorteados) break;
+    }
+
+    set_sorteados_final(sorteados);
   };
 
   return (
@@ -315,19 +349,35 @@ export default function Home() {
       <main>
         <h1>Sorteador</h1>
         <button onClick={executar_tudo}>executar tudo</button>
-        <>
+        <h3>Todos os Candidatos:</h3>
+        <div style={{ overflowY: "scroll", height: "20vh" }}>
+          <br />
           {usuarios.map(
             (usuario) => (
               <div key={usuario.id}>
-                <p >{`${usuario.nome}`}</p>
-                <p>{`${usuario.mensagem}`}</p>
+                <p>{`${usuario.nome}: ${usuario.mensagem}`}</p>
               </div>
-              
             ),
             <br />
           )}
-        </>
+        </div>
         <button onClick={mostrar_usuarios}>mostrar usuarios</button>
+        <button onClick={sortear}>sortear</button>
+        <h3>Sorteados:</h3>
+        <div style={{ overflowY: "scroll", height: "46vh" }}>
+          <br />
+          {sorteados_final.map((sorteado, indice) => (
+            <div key={sorteado.id * indice}>
+              <p>
+                #
+                {`${indice + 1} - ${sorteado.nome} | Tickets: ${
+                  sorteado.tickets
+                }`}
+              </p>
+              <br />
+            </div>
+          ))}
+        </div>
       </main>
 
       <footer></footer>
