@@ -1,18 +1,25 @@
-import { useState } from "react";
+import React, { useRef, useState } from "react";
 
 import axios from "axios";
 import { Chance } from "chance";
+import { Container, Button, Navbar, ListGroup, Form, ProgressBar } from "react-bootstrap";
 
 import Head from "next/head";
 
-export default function Home() {
+export default function Home(props) {
   let usuarios_dados = [];
 
   const [usuarios, set_usuarios] = useState([]);
   const [sorteados_final, set_sorteados_final] = useState([]);
+  const [arquivo_local, set_arquivo_local] = useState({});
+
   const video_id = "27716306792649728";
   const email_regex = new RegExp(/^[a-z0-9.]+@[a-z0-9]+.[a-z]+.([a-z]+)?$/i);
   const asterisco_regex = new RegExp(/\*\*/);
+
+  const cor_primaria = "#10490E";
+  const cor_secundaria = "#12782B";
+  const cor_terciaria = "#12782B";
 
   const get_inscritos = async () => await axios.get("api/get_subscribers");
   const get_comentarios = async () => await axios.post("api/post_comment");
@@ -95,7 +102,7 @@ export default function Home() {
                 nome_valido: false,
                 mensagem: [],
               };
-              usuario_estruturado.mensagem.push("Não comentou. ");
+              usuario_estruturado.mensagem.push(" Não comentou");
               usuarios_dados.push(usuario_estruturado);
             } else {
               usuarios_dados[indice].segue = true;
@@ -123,7 +130,7 @@ export default function Home() {
             asterisco_regex.test(usuario.nome)
           ) {
             usuarios_dados[indice].nome_valido = false;
-            usuarios_dados[indice].mensagem.push("Nome inválido. ");
+            usuarios_dados[indice].mensagem.push(" Nome inválido");
           } else {
             usuarios_dados[indice].nome_valido = true;
           }
@@ -146,8 +153,9 @@ export default function Home() {
           for (const usuario of usuarios_dados) {
             const indice = usuarios_dados.indexOf(usuario);
             if (!usuario.comentou) {
-              usuarios_dados[indice].mensagem
-                .push("Like não apurado por não ter comentado.");
+              usuarios_dados[indice].mensagem.push(
+                " Like não apurado por não ter comentado"
+              );
               continue;
             }
 
@@ -159,7 +167,7 @@ export default function Home() {
             );
 
             if (!usuario.segue) {
-              usuarios_dados[indice].mensagem.push("Não segue. ");
+              usuarios_dados[indice].mensagem.push(" Não segue");
             }
 
             let deu_like = false;
@@ -180,7 +188,7 @@ export default function Home() {
             } else {
               usuarios_dados[indice].deu_like = false;
               usuarios_dados[indice].mensagem.push(
-                "Não deu like nos últimos 100 vídeos. "
+                " Não deu like nos últimos 100 vídeos"
               );
             }
           }
@@ -206,7 +214,7 @@ export default function Home() {
           if (condicoes) {
             const indice = usuarios_dados.indexOf(usuario);
             usuarios_dados[indice].tickets = 1;
-            usuarios_dados[indice].mensagem.push("Ok.");
+            usuarios_dados[indice].mensagem.push(" Ok");
           }
         }
         resolve(usuarios_dados);
@@ -246,9 +254,9 @@ export default function Home() {
                 mensagem: [],
               };
               vip_estruturado.mensagem.push(
-                "Fez doação mas" +
+                " Fez doação mas" +
                   " não completou todas as tarefas." +
-                  " Nenhum ticket adicionado. "
+                  " Nenhum ticket adicionado"
               );
               usuarios_dados.push(vip_estruturado);
             } else {
@@ -262,9 +270,9 @@ export default function Home() {
                 usuarios_dados[indice].tickets += parseInt(vip.score);
               } else {
                 usuarios_dados[indice].mensagem.push(
-                  "Fez doação mas" +
+                  " Fez doação mas" +
                     " não completou todas as tarefas." +
-                    " Nenhum ticket adicionado. "
+                    " Nenhum ticket adicionado"
                 );
               }
             }
@@ -286,27 +294,40 @@ export default function Home() {
     await atribuir_tickets();
     await checar_vip();
     set_usuarios(usuarios_dados);
+    usuarios_dados = [];
   };
 
-  const mostrar_usuarios = () => {
-    console.log("usuarios", usuarios);
+  const arquivo_para_json = async (file) => {
+    return new Promise((resolve, reject) => {
+      const fileReader = new FileReader();
+      fileReader.onload = (event) => resolve(JSON.parse(event.target.result));
+      fileReader.onerror = (error) => reject(error);
+      fileReader.readAsText(file);
+    });
+  };
+
+  const ao_mudar_arquivo = async (event) => {
+    const arquivo = await arquivo_para_json(event.target.files[0]);
+    set_arquivo_local(arquivo);
   };
 
   const sortear = () => {
-    const quantidade_de_sorteados = 20;
+    const quantidade_de_sorteados = 20; //@TODO: obter do input do usuario
     let candidatos = [];
+    let lista_de_usuarios;
     let pesos = [];
     let sorteados = [];
     let candidatos_elegiveis = 0;
 
-    const offline = false;
+    const local = true;
 
-    if (offline) {
-      // @TODO: lógica de pegar os dados a partir do arquivo
-      console.log("offline");
+    if (local) {
+      lista_de_usuarios = arquivo_local;
+    } else {
+      lista_de_usuarios = usuarios;
     }
 
-    for (const usuario of usuarios) {
+    for (const usuario of lista_de_usuarios) {
       candidatos.push(usuario);
       pesos.push(usuario.tickets);
 
@@ -319,20 +340,44 @@ export default function Home() {
 
     if (quantidade_de_sorteados > candidatos_elegiveis) {
       alert("Número de sorteados é maior do que a lista de candidatos");
-      throw Error("Valor muito alto");
-    }
-
-    while (true) {
-      const sorteado = chance.weighted(candidatos, pesos);
-      if (!sorteados.includes(sorteado)) sorteados.push(sorteado);
-      if (sorteados.length >= quantidade_de_sorteados) break;
+    } else {
+      while (true) {
+        const sorteado = chance.weighted(candidatos, pesos);
+        if (!sorteados.includes(sorteado)) sorteados.push(sorteado);
+        if (sorteados.length >= quantidade_de_sorteados) break;
+      }
     }
 
     set_sorteados_final(sorteados);
+    sorteados = [];
   };
 
+  // Create a reference to the hidden file input element
+  const hiddenFileInput = useRef(null);
+
+  // Programatically click the hidden file input element
+  // when the Button component is clicked
+  const handleClick = (event) => {
+    hiddenFileInput.current.click();
+  };
+  // Call a function (passed as a prop from the parent component)
+  // to handle the user-selected file
+  const handleChange = async (event) => {
+    const arquivo = await arquivo_para_json(event.target.files[0]);
+    set_arquivo_local(arquivo);
+    set_usuarios(arquivo);
+  };
+
+  //@TODO: barra de progresso.
+
   return (
-    <div>
+    <div
+      style={{
+        background: cor_primaria,
+        height: "100%",
+        marginBottom: "10px",
+      }}
+    >
       <Head>
         <title>Sorteador</title>
         <meta
@@ -347,37 +392,89 @@ export default function Home() {
       </Head>
 
       <main>
-        <h1>Sorteador</h1>
-        <button onClick={executar_tudo}>executar tudo</button>
-        <h3>Todos os Candidatos:</h3>
-        <div style={{ overflowY: "scroll", height: "20vh" }}>
-          <br />
-          {usuarios.map(
-            (usuario) => (
-              <div key={usuario.id}>
-                <p>{`${usuario.nome}: ${usuario.mensagem}`}</p>
+        <Navbar bg="dark" variant="dark">
+          <Navbar.Brand href="#home">
+            <img
+              alt=""
+              src="/luck.svg"
+              width="30"
+              height="30"
+              className="d-inline-block align-top"
+            />{" "}
+            Sorteador
+          </Navbar.Brand>
+        </Navbar>
+
+        <Container fluid>
+          <h2>Utilitário online para realização de sorteios pela COS.TV</h2>
+          <p>Comece clicando no botão para importar os dados dos candidatos</p>
+          <Button
+            style={{ background: cor_terciaria, borderColor: cor_terciaria }}
+            onClick={executar_tudo}
+          >
+            Importar Novos Dados
+          </Button>
+          <Form>
+            <Form.Group>
+              <Form.File
+                style={{ display: "none" }}
+                id="arquivo_json"
+                ref={hiddenFileInput}
+                label="Enviar arquivo local"
+                onChange={handleChange}
+              />
+            </Form.Group>
+          </Form>
+          <Button
+            style={{ background: cor_terciaria, borderColor: cor_terciaria, marginTop: "10px" }}
+            onClick={handleClick}
+          >
+            Enviar Arquivo Local
+          </Button>
+
+          <h5>Todos os Candidatos:</h5>
+          <div
+            style={{
+              height: "17vh",
+              overflowY: "scroll",
+              color: "white",
+            }}
+          >
+            <ListGroup>
+              {usuarios.map((usuario) => (
+                <ListGroup.Item
+                  key={usuario.id}
+                  style={{ background: cor_secundaria, color: "white" }}
+                >{`${usuario.nome}: ${usuario.mensagem}`}</ListGroup.Item>
+              ))}
+            </ListGroup>
+          </div>
+        </Container>
+        <Container fluid>
+          <Button
+            style={{ background: cor_terciaria, borderColor: cor_terciaria, marginTop: "10px" }}
+            onClick={sortear}
+          >
+            Sortear
+          </Button>
+          <h5>Sorteados:</h5>
+          <div style={{ overflowY: "scroll", height: "40vh" }}>
+            {sorteados_final.map((sorteado, indice) => (
+              <div key={sorteado.id * indice}>
+                <ListGroup>
+                  <ListGroup.Item
+                    key={sorteado.id * indice * indice}
+                    style={{ background: cor_secundaria, color: "white" }}
+                  >
+                    {`#${indice + 1} ${sorteado.nome} | Tickets: ${
+                      sorteado.tickets
+                    }`}
+                  </ListGroup.Item>
+                </ListGroup>
               </div>
-            ),
-            <br />
-          )}
-        </div>
-        <button onClick={mostrar_usuarios}>mostrar usuarios</button>
-        <button onClick={sortear}>sortear</button>
-        <h3>Sorteados:</h3>
-        <div style={{ overflowY: "scroll", height: "46vh" }}>
-          <br />
-          {sorteados_final.map((sorteado, indice) => (
-            <div key={sorteado.id * indice}>
-              <p>
-                #
-                {`${indice + 1} - ${sorteado.nome} | Tickets: ${
-                  sorteado.tickets
-                }`}
-              </p>
-              <br />
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </Container>
       </main>
 
       <footer></footer>

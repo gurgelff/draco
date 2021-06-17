@@ -14,3 +14,9 @@ a {
 * {
   box-sizing: border-box;
 }
+
+h5,
+h2 {
+  padding-top: 10px;
+}
+
