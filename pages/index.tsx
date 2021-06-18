@@ -2,24 +2,39 @@ import React, { useRef, useState } from "react";
 
 import axios from "axios";
 import { Chance } from "chance";
-import { Container, Button, Navbar, ListGroup, Form, ProgressBar } from "react-bootstrap";
+import {
+  Container,
+  Button,
+  Navbar,
+  ListGroup,
+  Form,
+  ProgressBar,
+} from "react-bootstrap";
 
 import Head from "next/head";
 
 export default function Home(props) {
   let usuarios_dados = [];
+  let total_comentaristas = 0;
 
   const [usuarios, set_usuarios] = useState([]);
   const [sorteados_final, set_sorteados_final] = useState([]);
   const [arquivo_local, set_arquivo_local] = useState({});
+  const [log, set_log] = useState("");
+  const [status_progresso, set_status_progresso] = useState(0);
+  const [modo, set_modo] = useState("");
 
   const video_id = "27716306792649728";
   const email_regex = new RegExp(/^[a-z0-9.]+@[a-z0-9]+.[a-z]+.([a-z]+)?$/i);
   const asterisco_regex = new RegExp(/\*\*/);
 
-  const cor_primaria = "#10490E";
-  const cor_secundaria = "#12782B";
-  const cor_terciaria = "#12782B";
+  // const cor_primaria = "#10490E";
+  // const cor_secundaria = "#12782B";
+  // const cor_terciaria = "#12782B";
+
+  const cor_primaria = "#1E6F5C";
+  const cor_secundaria = "#289672";
+  const cor_terciaria = "#29BB89";
 
   const get_inscritos = async () => await axios.get("api/get_subscribers");
   const get_comentarios = async () => await axios.post("api/post_comment");
@@ -30,7 +45,7 @@ export default function Home(props) {
     return new Promise((resolve, reject) => {
       (async () => {
         try {
-          console.log("obtendo comentários...");
+          set_log("Obtendo comentários...");
           const dados_comentarios = await get_comentarios();
           const lista_de_comentadores = dados_comentarios.data.data.list;
 
@@ -58,13 +73,16 @@ export default function Home(props) {
                 mensagem: [],
               };
               usuarios_dados.push(comentador_estruturado);
+              total_comentaristas += 1;
             } else {
               usuarios_dados[indice].comentou = true;
             }
           }
-          console.log("user comments ", usuarios_dados);
+          set_log;
+          ("Finalizada a obtenção de comentários");
           resolve(usuarios_dados);
         } catch (error) {
+          set_log(`Erro ao obter comentários: ${error}`);
           reject(error);
         }
       })();
@@ -75,7 +93,7 @@ export default function Home(props) {
     return new Promise((resolve, reject) => {
       (async () => {
         try {
-          console.log("obtendo inscritos...");
+          set_log("Obtendo inscritos...");
           const dados_comentarios = await get_inscritos();
           const lista_de_inscritos = dados_comentarios.data.data.list;
 
@@ -108,9 +126,10 @@ export default function Home(props) {
               usuarios_dados[indice].segue = true;
             }
           }
-          console.log("user subs ", usuarios_dados);
+          set_log("Finalizada a obtenção de inscritos");
           resolve(usuarios_dados);
         } catch (error) {
+          set_log(`Erro ao obter inscritos: ${error}`);
           reject(error);
         }
       })();
@@ -120,7 +139,7 @@ export default function Home(props) {
   const checar_nomes = () => {
     return new Promise((resolve, reject) => {
       try {
-        console.log("checando nomes...");
+        set_log("checando nomes...");
 
         for (const usuario of usuarios_dados) {
           const indice = usuarios_dados.indexOf(usuario);
@@ -135,17 +154,17 @@ export default function Home(props) {
             usuarios_dados[indice].nome_valido = true;
           }
         }
-        console.log("user names ", usuarios_dados);
 
         resolve(usuarios_dados);
       } catch (error) {
+        set_log(`Erro ao checar nomes: ${error}`);
         reject(error);
       }
     });
   };
 
   const checar_likes = () => {
-    console.log("likes, usuarios = ", usuarios_dados);
+    set_log("Checando Likes...");
 
     return new Promise((resolve, reject) => {
       (async () => {
@@ -159,11 +178,8 @@ export default function Home(props) {
               continue;
             }
 
-            console.log(
-              `Apurando like de ${usuario.nome} ` +
-                `| ${usuarios_dados.indexOf(usuario) + 1} de ${
-                  usuarios_dados.length
-                } `
+            set_status_progresso(
+              (usuarios_dados.indexOf(usuario) + 1) / total_comentaristas
             );
 
             if (!usuario.segue) {
@@ -192,8 +208,11 @@ export default function Home(props) {
               );
             }
           }
+          set_status_progresso(0);
+          set_log("Finalizada a obtenção de likes.");
           resolve(usuarios_dados);
         } catch (error) {
+          set_log(`Erro ao obter likes: ${error}`);
           reject(error);
         }
       })();
@@ -203,7 +222,7 @@ export default function Home(props) {
   const atribuir_tickets = () => {
     return new Promise((resolve, reject) => {
       try {
-        console.log("atribuindo tickets...");
+        set_log("Atribuindo tickets...");
         for (const usuario of usuarios_dados) {
           const condicoes =
             usuario.segue &&
@@ -218,7 +237,9 @@ export default function Home(props) {
           }
         }
         resolve(usuarios_dados);
+        set_log("Finalizada a atribuição de tickets");
       } catch (error) {
+        set_log(`Erro ao atribuir tickets: ${error}`);
         reject(error);
       }
     });
@@ -228,7 +249,7 @@ export default function Home(props) {
     return new Promise((resolve, reject) => {
       (async () => {
         try {
-          console.log("checando gift votes...");
+          set_log("Checando gift votes...");
           const resposta_gift_votes = await get_gift_votes();
 
           for (const vip of resposta_gift_votes.data.data.reward_rank) {
@@ -279,6 +300,7 @@ export default function Home(props) {
           }
           resolve(usuarios_dados);
         } catch (error) {
+          set_log(`Erro ao checar gift votes: ${error}`);
           reject(error);
         }
       })();
@@ -286,7 +308,8 @@ export default function Home(props) {
   };
 
   const executar_tudo = async () => {
-    console.log("iniciando API");
+    set_modo("API");
+    set_log("Iniciando tarefas...");
     await checar_comentarios();
     await checar_inscritos();
     await checar_nomes();
@@ -295,6 +318,8 @@ export default function Home(props) {
     await checar_vip();
     set_usuarios(usuarios_dados);
     usuarios_dados = [];
+    total_comentaristas = 0;
+    set_log("");
   };
 
   const arquivo_para_json = async (file) => {
@@ -306,11 +331,6 @@ export default function Home(props) {
     });
   };
 
-  const ao_mudar_arquivo = async (event) => {
-    const arquivo = await arquivo_para_json(event.target.files[0]);
-    set_arquivo_local(arquivo);
-  };
-
   const sortear = () => {
     const quantidade_de_sorteados = 20; //@TODO: obter do input do usuario
     let candidatos = [];
@@ -319,9 +339,7 @@ export default function Home(props) {
     let sorteados = [];
     let candidatos_elegiveis = 0;
 
-    const local = true;
-
-    if (local) {
+    if (modo == "local") {
       lista_de_usuarios = arquivo_local;
     } else {
       lista_de_usuarios = usuarios;
@@ -352,30 +370,29 @@ export default function Home(props) {
     sorteados = [];
   };
 
-  // Create a reference to the hidden file input element
-  const hiddenFileInput = useRef(null);
+  const input_escondido = useRef(null);
 
-  // Programatically click the hidden file input element
-  // when the Button component is clicked
-  const handleClick = (event) => {
-    hiddenFileInput.current.click();
+  const lidar_com_clique = (event) => {
+    set_modo("local");
+    input_escondido.current.click();
   };
-  // Call a function (passed as a prop from the parent component)
-  // to handle the user-selected file
-  const handleChange = async (event) => {
+
+  const lidar_com_mudanca = async (event) => {
     const arquivo = await arquivo_para_json(event.target.files[0]);
     set_arquivo_local(arquivo);
     set_usuarios(arquivo);
   };
 
-  //@TODO: barra de progresso.
+  //@TODO: input -> quantidade de sorteados
+  //       destacar nomes dos usuarios
+  //       download do arquivo de usuarios
+  //       opções avançadas: qtd likes, comentarios, etc...
 
   return (
     <div
       style={{
         background: cor_primaria,
         height: "100%",
-        marginBottom: "10px",
       }}
     >
       <Head>
@@ -406,75 +423,116 @@ export default function Home(props) {
         </Navbar>
 
         <Container fluid>
-          <h2>Utilitário online para realização de sorteios pela COS.TV</h2>
-          <p>Comece clicando no botão para importar os dados dos candidatos</p>
-          <Button
-            style={{ background: cor_terciaria, borderColor: cor_terciaria }}
-            onClick={executar_tudo}
-          >
-            Importar Novos Dados
-          </Button>
-          <Form>
-            <Form.Group>
-              <Form.File
-                style={{ display: "none" }}
-                id="arquivo_json"
-                ref={hiddenFileInput}
-                label="Enviar arquivo local"
-                onChange={handleChange}
-              />
-            </Form.Group>
-          </Form>
-          <Button
-            style={{ background: cor_terciaria, borderColor: cor_terciaria, marginTop: "10px" }}
-            onClick={handleClick}
-          >
-            Enviar Arquivo Local
-          </Button>
+          <h3>Sorteador COS.TV</h3>
+          <p>Comece escolhendo qual modo deseja utilizar</p>
 
-          <h5>Todos os Candidatos:</h5>
           <div
             style={{
-              height: "17vh",
-              overflowY: "scroll",
-              color: "white",
+              display: "flex",
+              flexDirection: "row",
             }}
           >
-            <ListGroup>
-              {usuarios.map((usuario) => (
-                <ListGroup.Item
-                  key={usuario.id}
-                  style={{ background: cor_secundaria, color: "white" }}
-                >{`${usuario.nome}: ${usuario.mensagem}`}</ListGroup.Item>
-              ))}
-            </ListGroup>
+            <Button
+              style={{
+                background: cor_terciaria,
+                borderColor: cor_terciaria,
+                marginRight: "20px",
+              }}
+              onClick={executar_tudo}
+            >
+              Importar Novos Dados
+            </Button>
+            <Form>
+              <Form.Group>
+                <Form.File
+                  style={{ display: "none" }}
+                  id="arquivo_json"
+                  ref={input_escondido}
+                  label="Enviar arquivo local"
+                  onChange={lidar_com_mudanca}
+                />
+              </Form.Group>
+            </Form>
+            <Button
+              style={{
+                background: cor_terciaria,
+                borderColor: cor_terciaria,
+              }}
+              onClick={lidar_com_clique}
+            >
+              Enviar Arquivo Local
+            </Button>
           </div>
-        </Container>
-        <Container fluid>
-          <Button
-            style={{ background: cor_terciaria, borderColor: cor_terciaria, marginTop: "10px" }}
-            onClick={sortear}
-          >
-            Sortear
-          </Button>
-          <h5>Sorteados:</h5>
-          <div style={{ overflowY: "scroll", height: "40vh" }}>
-            {sorteados_final.map((sorteado, indice) => (
-              <div key={sorteado.id * indice}>
+
+          {usuarios[0] ? (
+            <>
+              <h5>Todos os Candidatos:</h5>
+              <div
+                style={{
+                  height: "17vh",
+                  overflowY: "scroll",
+                  color: "white",
+                  border: `2px solid ${cor_terciaria}`,
+                }}
+                id="candidatos"
+              >
                 <ListGroup>
-                  <ListGroup.Item
-                    key={sorteado.id * indice * indice}
-                    style={{ background: cor_secundaria, color: "white" }}
-                  >
-                    {`#${indice + 1} ${sorteado.nome} | Tickets: ${
-                      sorteado.tickets
-                    }`}
-                  </ListGroup.Item>
+                  {usuarios.map((usuario) => (
+                    <ListGroup.Item
+                      key={usuario.id}
+                      style={{ background: cor_secundaria, color: "white" }}
+                    >{`${usuario.nome}: ${usuario.mensagem}`}</ListGroup.Item>
+                  ))}
                 </ListGroup>
               </div>
-            ))}
-          </div>
+              <div id="botao-sortear">
+                <Button
+                  style={{
+                    background: cor_terciaria,
+                    borderColor: cor_terciaria,
+                    marginTop: "10px",
+                  }}
+                  onClick={sortear}
+                >
+                  Sortear
+                </Button>
+              </div>
+            </>
+          ) : null}
+
+          {log ? <p style={{ marginTop: "10px" }}>{log}</p> : null}
+          {status_progresso > 0 ? (
+            <ProgressBar animated now={status_progresso * 100} />
+          ) : null}
         </Container>
+        {sorteados_final[0] ? (
+          <Container fluid>
+            <h5>Sorteados:</h5>
+            <div
+              style={{
+                overflowY: "scroll",
+                height: "40vh",
+                border: `2px solid ${cor_terciaria}`,
+              }}
+              id="sorteados"
+            >
+              {sorteados_final.map((sorteado, indice) => (
+                <div key={sorteado.id * indice}>
+                  <ListGroup>
+                    <ListGroup.Item
+                      key={sorteado.id * indice * indice}
+                      style={{ background: cor_secundaria, color: "white" }}
+                    >
+                      {`#${indice + 1} ${sorteado.nome} | Tickets: ${
+                        sorteado.tickets
+                      }`}
+                    </ListGroup.Item>
+                  </ListGroup>
+                </div>
+              ))}
+            </div>
+          </Container>
+        ) : null}
       </main>
 
       <footer></footer>

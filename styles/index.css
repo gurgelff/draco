@@ -1,3 +1,30 @@
 * {
     color: white;
 }
+
+body {
+    background: #1E6F5C !important;
+}
+
+h3 {
+    margin-top: 4px !important;
+}
+
+.progress-bar {
+    background-color: #00aa71 !important;
+}
+
+
+@media (max-width: 500px) {
+    #botao-sortear, h4, h2, p {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    #candidatos {
+        height: 15vh !important;
+    }
+    #sorteados {
+        height: 19vh !important;
+    }
+}
