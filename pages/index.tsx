@@ -2,6 +2,7 @@ import React, { useRef, useState } from "react";
 
 import axios from "axios";
 import { Chance } from "chance";
+import download from "js-file-download";
 import {
   Container,
   Button,
@@ -9,6 +10,11 @@ import {
   ListGroup,
   Form,
   ProgressBar,
+  InputGroup,
+  FormControl,
+  Collapse,
+  Accordion,
+  Card,
 } from "react-bootstrap";
 
 import Head from "next/head";
@@ -23,6 +29,7 @@ export default function Home(props) {
   const [log, set_log] = useState("");
   const [status_progresso, set_status_progresso] = useState(0);
   const [modo, set_modo] = useState("");
+  const [input_sorteados, set_input_sorteados] = useState(3);
 
   const video_id = "27716306792649728";
   const email_regex = new RegExp(/^[a-z0-9.]+@[a-z0-9]+.[a-z]+.([a-z]+)?$/i);
@@ -332,7 +339,7 @@ export default function Home(props) {
   };
 
   const sortear = () => {
-    const quantidade_de_sorteados = 20; //@TODO: obter do input do usuario
+    const quantidade_de_sorteados = input_sorteados;
     let candidatos = [];
     let lista_de_usuarios;
     let pesos = [];
@@ -357,7 +364,7 @@ export default function Home(props) {
     const chance = Chance();
 
     if (quantidade_de_sorteados > candidatos_elegiveis) {
-      alert("Número de sorteados é maior do que a lista de candidatos");
+      alert("Número de sorteados é maior do que a lista de candidatos!");
     } else {
       while (true) {
         const sorteado = chance.weighted(candidatos, pesos);
@@ -383,9 +390,11 @@ export default function Home(props) {
     set_usuarios(arquivo);
   };
 
-  //@TODO: input -> quantidade de sorteados
-  //       destacar nomes dos usuarios
-  //       download do arquivo de usuarios
+  const baixar_arquivo = () => {
+    download(JSON.stringify(usuarios, null, 4), "candidatos.json");
+  };
+
+  //@TODO:
   //       opções avançadas: qtd likes, comentarios, etc...
 
   return (
@@ -409,7 +418,7 @@ export default function Home(props) {
       </Head>
 
       <main>
-        <Navbar bg="dark" variant="dark">
+        <Navbar id="logo" bg="dark" variant="dark">
           <Navbar.Brand href="#home">
             <img
               alt=""
@@ -417,14 +426,14 @@ export default function Home(props) {
               width="30"
               height="30"
               className="d-inline-block align-top"
-            />{" "}
+            />
             Sorteador
           </Navbar.Brand>
         </Navbar>
 
         <Container fluid>
-          <h3>Sorteador COS.TV</h3>
-          <p>Comece escolhendo qual modo deseja utilizar</p>
+          <h4>Sorteador COS.TV</h4>
+          <p>Comece escolhendo o modo</p>
 
           <div
             style={{
@@ -436,7 +445,7 @@ export default function Home(props) {
               style={{
                 background: cor_terciaria,
                 borderColor: cor_terciaria,
-                marginRight: "20px",
+                marginRight: "10px",
               }}
               onClick={executar_tudo}
             >
@@ -469,10 +478,11 @@ export default function Home(props) {
               <h5>Todos os Candidatos:</h5>
               <div
                 style={{
-                  height: "17vh",
+                  height: "20vh",
                   overflowY: "scroll",
                   color: "white",
                   border: `2px solid ${cor_terciaria}`,
+                  scrollbarWidth: "none",
                 }}
                 id="candidatos"
               >
@@ -481,10 +491,44 @@ export default function Home(props) {
                     <ListGroup.Item
                       key={usuario.id}
                       style={{ background: cor_secundaria, color: "white" }}
-                    >{`${usuario.nome}: ${usuario.mensagem}`}</ListGroup.Item>
+                    >
+                      <>
+                        {""}
+                        <Accordion defaultActiveKey="0">
+                          <Card id="colapso">
+                            <Card.Header id="colapso">
+                              <Accordion.Toggle as={"span"} eventKey="1">
+                                <span id="nome"> {`${usuario.nome}`} </span>
+                              </Accordion.Toggle>
+                            </Card.Header>
+                            <Accordion.Collapse eventKey="1">
+                              <Card.Body id="colapso">
+                                {`${usuario.mensagem
+                                  .join(',')
+                                  .replace(/,/g, ', ')}`}
+                              </Card.Body>
+                            </Accordion.Collapse>
+                          </Card>
+                        </Accordion>
+                      </>
+                    </ListGroup.Item>
                   ))}
                 </ListGroup>
               </div>
+              <div id="quantidade_sorteados">
+                <label>Quantidade de Sorteados</label>
+                <input
+                  type="number"
+                  name="quantity"
+                  value={input_sorteados}
+                  onInput={(event) =>
+                    set_input_sorteados(parseInt(event.target.value))
+                  }
+                  min={1}
+                  style={{ color: "black" }}
+                />
+              </div>
+
               <div id="botao-sortear">
                 <Button
                   style={{
@@ -495,6 +539,17 @@ export default function Home(props) {
                   onClick={sortear}
                 >
                   Sortear
+                </Button>
+                <Button
+                  style={{
+                    background: cor_terciaria,
+                    borderColor: cor_terciaria,
+                    marginTop: "10px",
+                    marginLeft: "10px",
+                  }}
+                  onClick={baixar_arquivo}
+                >
+                  Baixar Arquivo
                 </Button>
               </div>
             </>
@@ -511,8 +566,9 @@ export default function Home(props) {
             <div
               style={{
                 overflowY: "scroll",
-                height: "40vh",
+                height: "30vh",
                 border: `2px solid ${cor_terciaria}`,
+                scrollbarWidth: "none",
               }}
               id="sorteados"
             >
@@ -523,9 +579,19 @@ export default function Home(props) {
                       key={sorteado.id * indice * indice}
                       style={{ background: cor_secundaria, color: "white" }}
                     >
-                      {`#${indice + 1} ${sorteado.nome} | Tickets: ${
-                        sorteado.tickets
-                      }`}
+                      <Accordion defaultActiveKey="0">
+                        <Card id="colapso">
+                          <Card.Header id="colapso">
+                            <Accordion.Toggle as={"span"} eventKey="1">
+                              <span id="posicao">{`#${indice + 1}`}</span>{" "}
+                              <span id="nome">{`${sorteado.nome}`}</span>
+                            </Accordion.Toggle>
+                          </Card.Header>
+                          <Accordion.Collapse eventKey="1">
+                            <Card.Body id="colapso">{`Tickets: ${sorteado.tickets}`}</Card.Body>
+                          </Accordion.Collapse>
+                        </Card>
+                      </Accordion>
                     </ListGroup.Item>
                   </ListGroup>
                 </div>
