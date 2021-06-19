@@ -20,22 +20,27 @@ button {
 
 label {
     padding-right: 10px;
+    padding-top: 10px;
 }
 
 input {
     border-radius: 1vh;
     background: #01c27e;
-    width: 50px;
     color: white !important;
     border: 1px solid #00ffc3;
     text-align: center;
+}
+
+#quantidade_sorteados input {
+    width: 50px;
 }
 
 #candidatos {
     margin-bottom: 10px;
 }
 
-#colapso {
+#colapso,
+#transparente {
     background: rgba(0, 0, 0, 0);
     border: 0 solid rgba(0, 0, 0, 0);
 }
@@ -58,26 +63,28 @@ input {
         margin-top: 4px !important;
     }
 
+
+
     #sorteados,
     #candidatos {
         font-size: 0.8rem;
+        flex-direction: column;
+    }
+
+    #colapso {
+        flex-direction: column;
     }
 
     #botao-sortear,
     #logo,
     #quantidade_sorteados,
+    #colapso,
     h4,
     h5,
     p {
         display: flex;
         align-items: center;
         justify-content: center;
-    }
-}
-
-@media (max-height: 600px) {
-    #sorteados {
-        height: 25vh !important;
     }
 }
 
@@ -102,11 +109,28 @@ input {
     #botao-sortear,
     #logo,
     #quantidade_sorteados,
+    #colapso,
     h4,
     h5,
     p {
         display: flex;
         align-items: center;
         justify-content: center;
+    }
+}
+
+@media (max-width: 320px) {
+    span {
+        font-size: 0.8rem;
+    }
+}
+
+@media (max-width: 270px) {
+    h4 {
+        font-size: 1.2rem !important;
+    }
+
+    span {
+        font-size: 0.7rem;
     }
 }
