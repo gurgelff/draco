@@ -535,7 +535,10 @@ export default function Home() {
                           background: cor_terciaria,
                           borderColor: cor_terciaria,
                         }}
-                        onClick={lidar_com_clique}
+                        onClick={() => {
+                          lidar_com_clique();
+                          accordion_ref.current.click();
+                        }}
                       >
                         Enviar Arquivo Local
                       </Button>
@@ -544,10 +547,10 @@ export default function Home() {
                 </Accordion.Collapse>
               </Card>
             </Accordion>
-            <div id="centralizar">
+            <div>
               {usuarios[0] ? (
                 <>
-                  <h5>Todos os Candidatos:</h5>
+                  <h5 id="centralizar">Todos os Candidatos:</h5>
                   <div
                     style={{
                       height: "20vh",
@@ -556,9 +559,9 @@ export default function Home() {
                       border: `2px solid ${cor_terciaria}`,
                       scrollbarWidth: "none",
                     }}
-                    id="candidatos"
+                    id="centralizar"
                   >
-                    <ListGroup>
+                    <ListGroup id="candidatos">
                       {usuarios.map((usuario) => (
                         <ListGroup.Item
                           key={usuario.id}
