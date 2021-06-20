@@ -16,6 +16,7 @@ h4 {
 
 button {
     border: 1px solid #00ffc3 !important;
+
 }
 
 label {
@@ -29,6 +30,8 @@ input {
     color: white !important;
     border: 1px solid #00ffc3;
     text-align: center;
+    display: flex;
+    flex-direction: column;
 }
 
 #quantidade_sorteados input {
