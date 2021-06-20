@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 import nc from "next-connect";
 import cors from "cors";
 import axios from "axios";
