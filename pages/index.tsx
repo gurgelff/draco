@@ -428,7 +428,7 @@ export default function Home() {
         <title>Sorteador</title>
         <meta
           name="description"
-          content="Sorteador | Utilitário para sorteios com peso"
+          content="Sorteador COS.TV | Utilitário para sorteios com peso"
         />
         <link
           about="icon from freepik and flaticon"
