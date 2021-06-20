@@ -451,30 +451,27 @@ export default function Home() {
           </Navbar.Brand>
         </Navbar>
 
-        <Container fluid>
+        <Container>
           <h4>Sorteador COS.TV</h4>
-
           <div>
             <Accordion defaultActiveKey="0">
-              <Card id="colapso">
+              <Card style={{marginLeft: 0}} id="colapso">
                 <Card.Header id="colapso">
-                  <Accordion.Toggle
-                    as={"span"}
-                    eventKey="1"
-                    ref={accordion_ref}
-                  >
-                    <span
-                      id="span-accordion"
+                  <Accordion.Toggle as={"h6"} eventKey="1" ref={accordion_ref}>
+                    <h6
                       style={{
                         background: cor_terciaria,
                         borderColor: cor_terciaria,
                         padding: "10px",
                         border: "1px solid #00ffc3",
                         borderRadius: "1.2vh",
+                        width: "300px",
+                        textAlign: "center",
+                        fontSize: "1.2rem"
                       }}
                     >
                       Preencha as informações
-                    </span>
+                    </h6>
                   </Accordion.Toggle>
                 </Card.Header>
                 <Accordion.Collapse eventKey="1">
@@ -536,8 +533,8 @@ export default function Home() {
                           borderColor: cor_terciaria,
                         }}
                         onClick={() => {
-                          lidar_com_clique();
                           accordion_ref.current.click();
+                          lidar_com_clique();
                         }}
                       >
                         Enviar Arquivo Local
@@ -550,83 +547,160 @@ export default function Home() {
             <div>
               {usuarios[0] ? (
                 <>
-                  <h5 id="centralizar">Todos os Candidatos:</h5>
-                  <div
-                    style={{
-                      height: "20vh",
-                      overflowY: "scroll",
-                      color: "white",
-                      border: `2px solid ${cor_terciaria}`,
-                      scrollbarWidth: "none",
-                    }}
-                    id="centralizar"
-                  >
-                    <ListGroup id="candidatos">
-                      {usuarios.map((usuario) => (
-                        <ListGroup.Item
-                          key={usuario.id}
-                          style={{ background: cor_secundaria, color: "white" }}
+                  <Accordion defaultActiveKey="1">
+                    <Card id="colapso">
+                      <Card.Header id="colapso">
+                        <Accordion.Toggle
+                          as={"h5"}
+                          eventKey="1"
+                          ref={accordion_ref}
                         >
-                          <>
-                            {""}
-                            <Accordion defaultActiveKey="0">
-                              <Card id="transparente">
-                                <Card.Header id="transparente">
-                                  <Accordion.Toggle as={"span"} eventKey="1">
-                                    <span id="nome"> {`${usuario.nome}`} </span>
-                                  </Accordion.Toggle>
-                                </Card.Header>
-                                <Accordion.Collapse eventKey="1">
-                                  <Card.Body id="transparente">
-                                    {`${usuario.mensagem
-                                      .join(",")
-                                      .replace(/,/g, ", ")}`}
-                                  </Card.Body>
-                                </Accordion.Collapse>
-                              </Card>
-                            </Accordion>
-                          </>
-                        </ListGroup.Item>
-                      ))}
-                    </ListGroup>
-                  </div>
-                  <div id="quantidade_sorteados">
-                    <label>Quantidade de Sorteados</label>
-                    <input
-                      type="number"
-                      name="quantity"
-                      value={input_sorteados}
-                      onInput={(event) =>
-                        set_input_sorteados(parseInt(event.target.value))
-                      }
-                      min={1}
-                      style={{ color: "black" }}
-                    />
-                  </div>
+                          <h5
+                            id="centralizar"
+                            style={{
+                              background: "rgba(0,0,0,0)",
+                              borderColor: cor_terciaria,
+                              padding: "10px",
+                              border: "1px solid #00ffc3",
+                              borderRadius: "1.2vh",
+                              width: "300px",
+                              textAlign: "center",
+                            }}
+                          >
+                            Todos os Candidatos
+                          </h5>
+                        </Accordion.Toggle>
+                      </Card.Header>
+                      <Accordion.Collapse eventKey="1">
+                        <Card.Body id="colapso" style={{ paddingTop: 0 }}>
+                          <div
+                            style={{
+                              height: "30vh",
+                              overflowY: "scroll",
+                              color: "white",
+                              border: `2px solid ${cor_terciaria}`,
+                              scrollbarWidth: "none",
+                            }}
+                            id="centralizar"
+                          >
+                            <ListGroup id="candidatos">
+                              {usuarios.map((usuario) => (
+                                <ListGroup.Item
+                                  key={usuario.id}
+                                  style={{
+                                    background: cor_secundaria,
+                                    color: "white",
+                                  }}
+                                >
+                                  <>
+                                    {""}
+                                    <Accordion defaultActiveKey="0">
+                                      <Card id="transparente">
+                                        <Card.Header id="transparente">
+                                          <Accordion.Toggle
+                                            as={"span"}
+                                            eventKey="1"
+                                          >
+                                            <span id="nome">
+                                              {" "}
+                                              {`${usuario.nome}`}{" "}
+                                            </span>
+                                          </Accordion.Toggle>
+                                        </Card.Header>
+                                        <Accordion.Collapse eventKey="1">
+                                          <Card.Body id="transparente">
+                                            {`${usuario.mensagem
+                                              .join(",")
+                                              .replace(/,/g, ", ")}`}
+                                          </Card.Body>
+                                        </Accordion.Collapse>
+                                      </Card>
+                                    </Accordion>
+                                  </>
+                                </ListGroup.Item>
+                              ))}
+                            </ListGroup>
+                          </div>
+                        </Card.Body>
+                      </Accordion.Collapse>
+                    </Card>
+                  </Accordion>
 
-                  <div id="botao-sortear">
-                    <Button
-                      style={{
-                        background: cor_terciaria,
-                        borderColor: cor_terciaria,
-                        marginTop: "10px",
-                      }}
-                      onClick={sortear}
-                    >
-                      Sortear
-                    </Button>
-                    <Button
-                      style={{
-                        background: cor_terciaria,
-                        borderColor: cor_terciaria,
-                        marginTop: "10px",
-                        marginLeft: "10px",
-                      }}
-                      onClick={baixar_arquivo}
-                    >
-                      Baixar Arquivo
-                    </Button>
-                  </div>
+                  <Accordion defaultActiveKey="1">
+                    <Card id="colapso">
+                      <Card.Header id="colapso">
+                        <Accordion.Toggle
+                          as={"h5"}
+                          eventKey="1"
+                          ref={accordion_ref}
+                        >
+                          <h5
+                            id="centralizar"
+                            style={{
+                              background: "rgba(0,0,0,0)",
+                              borderColor: cor_terciaria,
+                              padding: "10px",
+                              border: "1px solid #00ffc3",
+                              borderRadius: "1.2vh",
+                              width: "300px",
+                              textAlign: "center",
+                            }}
+                          >
+                            Informações de Sorteio
+                          </h5>
+                        </Accordion.Toggle>
+                      </Card.Header>
+                      <Accordion.Collapse eventKey="1">
+                        <Card.Body id="colapso" style={{ paddingTop: 0 }}>
+                          <div>
+                            <div id="quantidade_sorteados">
+                              <label>Quantidade de Sorteados</label>
+                              <input
+                                type="number"
+                                name="quantity"
+                                value={input_sorteados}
+                                onInput={(event) =>
+                                  set_input_sorteados(
+                                    parseInt(event.target.value)
+                                  )
+                                }
+                                min={1}
+                                style={{ color: "black" }}
+                              />
+                            </div>
+
+                            <div id="botao-sortear">
+                              <Button
+                                style={{
+                                  background: cor_terciaria,
+                                  borderColor: cor_terciaria,
+                                  marginTop: "10px",
+                                  paddingRight: "20px",
+                                }}
+                                onClick={() => {
+                                  sortear();
+                                  accordion_ref.current.click();
+                                }}
+                              >
+                                Sortear
+                              </Button>
+                              <Button
+                                style={{
+                                  background: cor_terciaria,
+                                  borderColor: cor_terciaria,
+                                  marginTop: "10px",
+                                  marginLeft: "10px",
+                                }}
+                                onClick={baixar_arquivo}
+                              >
+                                Baixar Arquivo
+                              </Button>
+                            </div>
+                          </div>
+                        </Card.Body>
+                      </Accordion.Collapse>
+                    </Card>
+                  </Accordion>
                 </>
               ) : null}
 
@@ -660,46 +734,80 @@ export default function Home() {
               ) : null}
             </div>
           </div>
-        </Container>
-        {sorteados_final[0] ? (
-          <Container fluid>
-            <h5>Sorteados:</h5>
-            <div
-              style={{
-                overflowY: "scroll",
-                height: "30vh",
-                border: `2px solid ${cor_terciaria}`,
-                scrollbarWidth: "none",
-              }}
-              id="sorteados"
-            >
-              {sorteados_final.map((sorteado, indice) => (
-                <div key={sorteado.id * indice}>
-                  <ListGroup>
-                    <ListGroup.Item
-                      key={sorteado.id * indice * indice}
-                      style={{ background: cor_secundaria, color: "white" }}
+
+          {sorteados_final[0] ? (
+            <Accordion defaultActiveKey="1">
+              <Card id="colapso">
+                <Card.Header id="colapso">
+                  <Accordion.Toggle as={"h5"} eventKey="1" ref={accordion_ref}>
+                    <h5
+                      id="centralizar"
+                      style={{
+                        background: "rgba(0,0,0,0)",
+                        borderColor: cor_terciaria,
+                        padding: "10px",
+                        border: "1px solid #00ffc3",
+                        borderRadius: "1.2vh",
+                        width: "300px",
+                        textAlign: "center",
+                      }}
                     >
-                      <Accordion defaultActiveKey="0">
-                        <Card id="transparente">
-                          <Card.Header id="transparente">
-                            <Accordion.Toggle as={"span"} eventKey="1">
-                              <span id="posicao">{`#${indice + 1}`}</span>{" "}
-                              <span id="nome">{`${sorteado.nome}`}</span>
-                            </Accordion.Toggle>
-                          </Card.Header>
-                          <Accordion.Collapse eventKey="1">
-                            <Card.Body id="transparente">{`Tickets: ${sorteado.tickets}`}</Card.Body>
-                          </Accordion.Collapse>
-                        </Card>
-                      </Accordion>
-                    </ListGroup.Item>
-                  </ListGroup>
-                </div>
-              ))}
-            </div>
-          </Container>
-        ) : null}
+                      Sorteados
+                    </h5>
+                  </Accordion.Toggle>
+                </Card.Header>
+                <Accordion.Collapse eventKey="1">
+                  <Card.Body id="colapso" style={{ paddingTop: 0 }}>
+                    <>
+                      <div
+                        style={{
+                          overflowY: "scroll",
+                          height: "24vh",
+                          border: `2px solid ${cor_terciaria}`,
+                          scrollbarWidth: "none",
+                        }}
+                        id="sorteados"
+                      >
+                        {sorteados_final.map((sorteado, indice) => (
+                          <div key={sorteado.id * indice}>
+                            <ListGroup>
+                              <ListGroup.Item
+                                key={sorteado.id * indice * indice}
+                                style={{
+                                  background: cor_secundaria,
+                                  color: "white",
+                                }}
+                              >
+                                <Accordion defaultActiveKey="0">
+                                  <Card id="transparente">
+                                    <Card.Header id="transparente">
+                                      <Accordion.Toggle
+                                        as={"span"}
+                                        eventKey="1"
+                                      >
+                                        <span id="posicao">{`#${
+                                          indice + 1
+                                        }`}</span>{" "}
+                                        <span id="nome">{`${sorteado.nome}`}</span>
+                                      </Accordion.Toggle>
+                                    </Card.Header>
+                                    <Accordion.Collapse eventKey="1">
+                                      <Card.Body id="transparente">{`Tickets: ${sorteado.tickets}`}</Card.Body>
+                                    </Accordion.Collapse>
+                                  </Card>
+                                </Accordion>
+                              </ListGroup.Item>
+                            </ListGroup>
+                          </div>
+                        ))}
+                      </div>
+                    </>
+                  </Card.Body>
+                </Accordion.Collapse>
+              </Card>
+            </Accordion>
+          ) : null}
+        </Container>
       </main>
 
       <footer></footer>
