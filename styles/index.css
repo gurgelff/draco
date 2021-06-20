@@ -57,18 +57,23 @@ input {
     background-color: #00aa71 !important;
 }
 
+
+
 @media (max-width: 500px) {
 
     h4 {
         margin-top: 4px !important;
     }
 
-
+    label {
+        justify-content: start !important;
+    }
 
     #sorteados,
     #candidatos {
         font-size: 0.8rem;
         flex-direction: column;
+        height: 27.8vh !important;
     }
 
     #colapso {
@@ -94,8 +99,8 @@ input {
         height: 32vh !important;
     }
 
-    p {
-        display: none;
+    label {
+        justify-content: start !important;
     }
 
     button {
@@ -125,12 +130,16 @@ input {
     }
 }
 
-@media (max-width: 270px) {
+@media (max-width: 280px) {
     h4 {
         font-size: 1.2rem !important;
     }
 
     span {
         font-size: 0.7rem;
+    }
+
+    #nome, #posicao {
+        font-size: 4vw;
     }
 }
