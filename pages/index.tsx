@@ -36,7 +36,6 @@ export default function Home() {
   const [input_video_id, set_input_video_id] = useState("27716306792649728");
   const [input_canal_id, set_input_canal_id] = useState("26984287292531712");
 
-  const video_id = "27716306792649728";
   const email_regex = new RegExp(/^[a-z0-9.]+@[a-z0-9]+.[a-z]+.([a-z]+)?$/i);
   const asterisco_regex = new RegExp(/\*\*/);
 
@@ -99,8 +98,7 @@ export default function Home() {
               usuarios_dados[indice].comentou = true;
             }
           }
-          set_log;
-          ("Finalizada a obtenção de comentários");
+          set_log("Finalizada a obtenção de comentários");
           resolve(usuarios_dados);
         } catch (error) {
           set_log(`Erro ao obter comentários: ${error}`);
@@ -416,12 +414,16 @@ export default function Home() {
   const baixar_arquivo = () => {
     download(JSON.stringify(usuarios, null, 4), "candidatos.json");
   };
+  //@TODO:
   //       opções avançadas: lite: qtd likes, comentarios, etc...
+  //       card desktop
+  //       msg: ultimos x likes
 
   return (
     <div
       style={{
         background: cor_primaria,
+        border: "1px solid black"
       }}
     >
       <Head>
@@ -677,9 +679,26 @@ export default function Home() {
                                   marginTop: "10px",
                                   paddingRight: "20px",
                                 }}
-                                onClick={() => {
-                                  sortear();
-                                  accordion_ref.current.click();
+                                onClick={(event) => {
+                                  const valor = input_sorteados;
+                                  
+                                  if (!valor || valor == '0') {
+                                    alert("Valor nulo não permitido.");
+                                    set_input_sorteados(3);
+                                    return;
+                                  }
+
+                                  if (typeof parseInt(valor) != "number") {
+                                    alert(
+                                      "Campo de quantidade de sorteados " +
+                                      "só pode receber valores inteiros maiores " +
+                                      "que zero. "
+                                    );
+                                    set_input_sorteados(3);
+                                  } else {
+                                    sortear();
+                                    accordion_ref.current.click();
+                                  }
                                 }}
                               >
                                 Sortear
