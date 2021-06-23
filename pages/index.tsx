@@ -35,6 +35,12 @@ export default function Home() {
   const [input_sorteados, set_input_sorteados] = useState(3);
   const [input_video_id, set_input_video_id] = useState("27716306792649728");
   const [input_canal_id, set_input_canal_id] = useState("26984287292531712");
+  const [atributos_precisao, set_atributos_precisao] = useState({
+    likes: "99",
+    comentarios: "999",
+    inscritos: "999",
+    vip: "99"
+  });
 
   const email_regex = new RegExp(/^[a-z0-9.]+@[a-z0-9]+.[a-z]+.([a-z]+)?$/i);
   const asterisco_regex = new RegExp(/\*\*/);
@@ -65,6 +71,7 @@ export default function Home() {
 
           const dados_comentarios = await get_comentarios({
             id: input_video_id,
+            quantidade_comentarios: atributos_precisao.comentarios
           });
 
           const lista_de_comentadores = dados_comentarios.data.data.list;
@@ -117,6 +124,7 @@ export default function Home() {
           const dados_inscritos = await get_inscritos({
             params: {
               id: input_canal_id,
+              quantidade_inscritos: atributos_precisao.inscritos,
             },
           });
 
@@ -215,6 +223,7 @@ export default function Home() {
             const resposta_like = await get_likes({
               params: {
                 id: usuario.id,
+                quantidade_likes: atributos_precisao.likes,
               },
             });
 
@@ -229,7 +238,8 @@ export default function Home() {
             } else {
               usuarios_dados[indice].deu_like = false;
               usuarios_dados[indice].mensagem.push(
-                " Não deu like nos últimos 100 vídeos"
+                ` Não deu like nos últimos 
+                ${atributos_precisao.likes} vídeos curtidos`
               );
             }
           }
@@ -279,6 +289,7 @@ export default function Home() {
           const resposta_gift_votes = await get_gift_votes({
             params: {
               id: input_video_id,
+              quantidade_vip: atributos_precisao.vip,
             },
           });
 
@@ -337,15 +348,28 @@ export default function Home() {
     });
   };
 
+  let criterios = {
+    like: true,
+    comentou: true,
+    segue: true,
+    nome_valido: true
+  }
+
   const executar_tudo = async () => {
     set_modo("API");
     set_log("Iniciando tarefas ");
-    await checar_comentarios();
-    await checar_inscritos();
-    await checar_nomes();
-    await checar_likes();
+    
+
+
+    criterios.like ? await checar_comentarios() : null;
+    criterios.segue ? await checar_inscritos() : null;
+    criterios.nome_valido ? await checar_nomes() : null;
+    criterios.like ? await checar_likes() : null;
+
     await atribuir_tickets();
     await checar_vip();
+
+
     set_usuarios(usuarios_dados);
     usuarios_dados = [];
     total_comentaristas = 0;
@@ -400,7 +424,7 @@ export default function Home() {
     sorteados = [];
   };
 
-  const lidar_com_clique = (event) => {
+  const lidar_com_clique = () => {
     set_modo("local");
     input_escondido.current.click();
   };
@@ -414,16 +438,71 @@ export default function Home() {
   const baixar_arquivo = () => {
     download(JSON.stringify(usuarios, null, 4), "candidatos.json");
   };
+
+  const mudar_precisao = (event) => {
+    const novos_atributos = {
+      likes: "99",
+      comentarios: "999",
+      inscritos: "999",
+      vip: "99"
+    };
+    switch (event.target.value) {
+      case "Muito Alta":
+        novos_atributos.likes = "99";
+        novos_atributos.comentarios = "999";
+        novos_atributos.inscritos = "999";
+        novos_atributos.vip = "99";
+        break;
+
+      case "Alta":
+        novos_atributos.likes = "50";
+        novos_atributos.comentarios = "500";
+        novos_atributos.inscritos = "500";
+        novos_atributos.vip = "50";
+        break;
+
+      case "Média":
+        novos_atributos.likes = "25";
+        novos_atributos.comentarios = "250";
+        novos_atributos.inscritos = "250";
+        novos_atributos.vip = "25";
+        break;
+
+      case "Baixa":
+        novos_atributos.likes = "9";
+        novos_atributos.comentarios = "99";
+        novos_atributos.inscritos = "99";
+        novos_atributos.vip = "9";
+        break;
+
+      case "Muito Baixa":
+        novos_atributos.likes = "2";
+        novos_atributos.comentarios = "2";
+        novos_atributos.inscritos = "2";
+        novos_atributos.vip = "2";
+        break;
+
+      default:
+         novos_atributos.likes = "99";
+         novos_atributos.comentarios = "999";
+         novos_atributos.inscritos = "999";
+         novos_atributos.vip = "99";
+        break;
+    }
+
+    set_atributos_precisao(novos_atributos);
+  }
+
   //@TODO:
-  //       opções avançadas: lite: qtd likes, comentarios, etc...
+  //       campos personalisados - multiple choice likes, comentarios...
   //       card desktop
-  //       msg: ultimos x likes
+  //       retry
 
   return (
     <div
       style={{
         background: cor_primaria,
-        border: "1px solid black"
+        border: "1px solid black",
       }}
     >
       <Head>
@@ -457,7 +536,7 @@ export default function Home() {
           <h4>Sorteador COS.TV</h4>
           <div>
             <Accordion defaultActiveKey="0">
-              <Card style={{marginLeft: 0}} id="colapso">
+              <Card style={{ marginLeft: 0 }} id="colapso">
                 <Card.Header id="colapso">
                   <Accordion.Toggle as={"h6"} eventKey="1" ref={accordion_ref}>
                     <h6
@@ -469,7 +548,7 @@ export default function Home() {
                         borderRadius: "1.2vh",
                         width: "300px",
                         textAlign: "center",
-                        fontSize: "1.2rem"
+                        fontSize: "1.2rem",
                       }}
                     >
                       Preencha as informações
@@ -478,6 +557,14 @@ export default function Home() {
                 </Card.Header>
                 <Accordion.Collapse eventKey="1">
                   <Card.Body id="colapso" style={{ paddingTop: 0 }}>
+                    <label htmlFor="precisao">Precisão</label>
+                    <select onChange={mudar_precisao} name="precisao" id="select">
+                      <option value="Muito Alta">Muito Alta</option>
+                      <option value="Alta">Alta</option>
+                      <option value="Média">Média</option>
+                      <option value="Baixa">Baixa</option>
+                      <option value="Muito Baixa">Muito Baixa</option>
+                    </select>
                     <label>ID do vídeo</label>
                     <input
                       type="text"
@@ -679,10 +766,11 @@ export default function Home() {
                                   marginTop: "10px",
                                   paddingRight: "20px",
                                 }}
-                                onClick={(event) => {
+                                onClick={() => {
+                                  //@TODO: transformar numa função separada
                                   const valor = input_sorteados;
-                                  
-                                  if (!valor || valor == '0') {
+
+                                  if (!valor || valor == "0") {
                                     alert("Valor nulo não permitido.");
                                     set_input_sorteados(3);
                                     return;
@@ -691,8 +779,8 @@ export default function Home() {
                                   if (typeof parseInt(valor) != "number") {
                                     alert(
                                       "Campo de quantidade de sorteados " +
-                                      "só pode receber valores inteiros maiores " +
-                                      "que zero. "
+                                        "só pode receber valores inteiros maiores " +
+                                        "que zero. "
                                     );
                                     set_input_sorteados(3);
                                   } else {

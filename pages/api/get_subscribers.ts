@@ -10,7 +10,8 @@ const handler = nc()
 .get(async (req, res) => {
         const inscritos_url =
         `https://cos.tv/api/v1/feed/video_user/others_fans_list?` +
-            `fuid=${req.query.id}&page=1&pagesize=999`; //999
+        `fuid=${req.query.id}`
+        + `&page=1&pagesize=${req.query.quantidade_inscritos}`;
         const response = await axios.get(inscritos_url);
         res.json(response.data);
     });

@@ -34,6 +34,31 @@ input {
     flex-direction: column;
 }
 
+#select {
+    background: #01c27e !important;
+    color: white !important;
+    border-radius: 1vh;
+    border: 1px solid #00ffc3;
+    display: block;
+    text-align: center;
+    text-align-last: center;
+    -moz-text-align-last: center;
+}
+
+#criterios {
+    display: inline-block;
+}
+
+#quebra-linha {
+    display: block;
+    margin-right: 20px;
+}
+
+#criterios input {
+    display: inline;
+    vertical-align: middle;
+}
+
 #quantidade_sorteados {
     display: flex;
     flex-direction: row;
