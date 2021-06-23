@@ -39,7 +39,7 @@ export default function Home() {
     likes: "99",
     comentarios: "999",
     inscritos: "999",
-    vip: "99"
+    vip: "99",
   });
 
   const email_regex = new RegExp(/^[a-z0-9.]+@[a-z0-9]+.[a-z]+.([a-z]+)?$/i);
@@ -71,7 +71,7 @@ export default function Home() {
 
           const dados_comentarios = await get_comentarios({
             id: input_video_id,
-            quantidade_comentarios: atributos_precisao.comentarios
+            quantidade_comentarios: atributos_precisao.comentarios,
           });
 
           const lista_de_comentadores = dados_comentarios.data.data.list;
@@ -348,27 +348,35 @@ export default function Home() {
     });
   };
 
-  let criterios = {
-    like: true,
-    comentou: true,
-    segue: true,
-    nome_valido: true
-  }
+  const [criterios, set_criterios] = useState({
+    like: { executar: true, funcao: checar_likes },
+    comentou: { executar: true, funcao: checar_comentarios },
+    segue: { executar: true, funcao: checar_inscritos },
+    nome_valido: { executar: true, funcao: checar_nomes },
+  });
 
   const executar_tudo = async () => {
     set_modo("API");
     set_log("Iniciando tarefas ");
     
+    if (criterios.comentou.executar) {
+      await criterios.comentou.funcao();
+    }
 
+    if (criterios.segue.executar) {
+      await criterios.segue.funcao();
+    }
 
-    criterios.like ? await checar_comentarios() : null;
-    criterios.segue ? await checar_inscritos() : null;
-    criterios.nome_valido ? await checar_nomes() : null;
-    criterios.like ? await checar_likes() : null;
+    if (criterios.nome_valido.executar) {
+      await criterios.nome_valido.funcao();
+    }
+
+    if (criterios.like.executar) {
+      await criterios.like.funcao();
+    }
 
     await atribuir_tickets();
     await checar_vip();
-
 
     set_usuarios(usuarios_dados);
     usuarios_dados = [];
@@ -411,7 +419,8 @@ export default function Home() {
     const chance = Chance();
 
     if (quantidade_de_sorteados > candidatos_elegiveis) {
-      alert("Número de sorteados é maior do que a lista de candidatos!");
+      alert("Número de sorteados é maior do que" +
+            " a lista de candidatos elegíveis!");
     } else {
       while (true) {
         const sorteado = chance.weighted(candidatos, pesos);
@@ -444,7 +453,7 @@ export default function Home() {
       likes: "99",
       comentarios: "999",
       inscritos: "999",
-      vip: "99"
+      vip: "99",
     };
     switch (event.target.value) {
       case "Muito Alta":
@@ -483,15 +492,15 @@ export default function Home() {
         break;
 
       default:
-         novos_atributos.likes = "99";
-         novos_atributos.comentarios = "999";
-         novos_atributos.inscritos = "999";
-         novos_atributos.vip = "99";
+        novos_atributos.likes = "99";
+        novos_atributos.comentarios = "999";
+        novos_atributos.inscritos = "999";
+        novos_atributos.vip = "99";
         break;
     }
 
     set_atributos_precisao(novos_atributos);
-  }
+  };
 
   //@TODO:
   //       campos personalisados - multiple choice likes, comentarios...
@@ -558,7 +567,11 @@ export default function Home() {
                 <Accordion.Collapse eventKey="1">
                   <Card.Body id="colapso" style={{ paddingTop: 0 }}>
                     <label htmlFor="precisao">Precisão</label>
-                    <select onChange={mudar_precisao} name="precisao" id="select">
+                    <select
+                      onChange={mudar_precisao}
+                      name="precisao"
+                      id="select"
+                    >
                       <option value="Muito Alta">Muito Alta</option>
                       <option value="Alta">Alta</option>
                       <option value="Média">Média</option>
@@ -585,6 +598,76 @@ export default function Home() {
                       }
                       style={{ color: "black" }}
                     />
+                    <div id="criterios-moveis">
+                      <div id="criterios">
+                        <div id="uebra-linha">
+                          <input
+                            type="checkbox"
+                            defaultChecked
+                            onChange={() => {
+                              set_criterios({
+                                ...criterios,
+                                like: {
+                                  ...criterios.like,
+                                  executar: !criterios.like.executar,
+                                },
+                              });
+                            }}
+                          />
+                          <label>Like</label>
+                        </div>
+                        <div id="uebra-linha">
+                          <input
+                            type="checkbox"
+                            defaultChecked
+                            onChange={() => {
+                              set_criterios({
+                                ...criterios,
+                                segue: {
+                                  ...criterios.segue,
+                                  executar: !criterios.segue.executar,
+                                },
+                              });
+                            }}
+                          />
+                          <label>Segue</label>
+                        </div>
+                      </div>
+                      <div id="criterios">
+                        <div id="uebra-linha">
+                          <input
+                            type="checkbox"
+                            checked
+                            onChange={() => {
+                              set_criterios({
+                                ...criterios,
+                                comentou: {
+                                  ...criterios.comentou,
+                                  executar: !criterios.comentou.executar,
+                                },
+                              });
+                            }}
+                          />
+                          <label>Comentou</label>
+                        </div>
+                        <div id="uebra-linha">
+                          <input
+                            type="checkbox"
+                            defaultChecked
+                            onChange={() => {
+                              set_criterios({
+                                ...criterios,
+                                nome_valido: {
+                                  ...criterios.nome_valido,
+                                  executar: !criterios.nome_valido.executar,
+                                },
+                              });
+                            }}
+                          />
+                          <label>Nome Válido</label>
+                        </div>
+                      </div>
+                    </div>
                     <div
                       style={{
                         display: "flex",

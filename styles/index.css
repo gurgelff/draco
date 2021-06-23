@@ -51,12 +51,13 @@ input {
 
 #quebra-linha {
     display: block;
-    margin-right: 20px;
 }
 
 #criterios input {
     display: inline;
+    margin-right: 10px;
     vertical-align: middle;
+    filter: invert(100%) hue-rotate(110deg) brightness(1.7);
 }
 
 #quantidade_sorteados {
@@ -102,6 +103,12 @@ input {
 
     label {
         justify-content: start !important;
+    }
+
+    #criterios-moveis {
+        display: flex;
+        align-items: flex-start;
+        justify-content: flex-start;
     }
 
     #sorteados,
