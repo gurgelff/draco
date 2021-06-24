@@ -50,7 +50,9 @@ export default function Home() {
   const cor_terciaria = "#29BB89";
 
   const input_escondido = useRef(null);
-  const accordion_ref = useRef(null);
+  const accordion_info_ref = useRef(null);
+  const accordion_candidatos_ref = useRef(null);
+  const accordion_sorteio_ref = useRef(null);
 
   const get_inscritos = async (params) =>
     await axios.get("api/get_subscribers", params);
@@ -503,17 +505,12 @@ export default function Home() {
   };
 
   //@TODO:
-  //       campos personalisados - multiple choice likes, comentarios...
   //       card desktop
+  //       individual refs
   //       retry
 
   return (
-    <div
-      style={{
-        background: cor_primaria,
-        border: "1px solid black",
-      }}
-    >
+    <div>
       <Head>
         <title>Sorteador</title>
         <meta
@@ -541,13 +538,13 @@ export default function Home() {
           </Navbar.Brand>
         </Navbar>
 
-        <Container>
+        <Container id="card-principal">
           <h4>Sorteador COS.TV</h4>
           <div>
             <Accordion defaultActiveKey="0">
               <Card style={{ marginLeft: 0 }} id="colapso">
                 <Card.Header id="colapso">
-                  <Accordion.Toggle as={"h6"} eventKey="1" ref={accordion_ref}>
+                  <Accordion.Toggle as={"h6"} eventKey="1" ref={accordion_info_ref}>
                     <h6
                       style={{
                         background: cor_terciaria,
@@ -682,7 +679,7 @@ export default function Home() {
                           marginRight: "10px",
                         }}
                         onClick={() => {
-                          accordion_ref.current.click();
+                          accordion_info_ref.current.click();
                           executar_tudo();
                         }}
                       >
@@ -705,7 +702,7 @@ export default function Home() {
                           borderColor: cor_terciaria,
                         }}
                         onClick={() => {
-                          accordion_ref.current.click();
+                          accordion_info_ref.current.click();
                           lidar_com_clique();
                         }}
                       >
@@ -716,6 +713,34 @@ export default function Home() {
                 </Accordion.Collapse>
               </Card>
             </Accordion>
+            {log ? (
+              <>
+                <p style={{ marginTop: "10px", display: "inline" }}>
+                  {log}
+                  {""}
+                </p>
+                {""}
+                {status_progresso > 0 ? (
+                  <ProgressBar
+                    id="barra"
+                    animated
+                    now={status_progresso * 100}
+                  />
+                ) : (
+                  <Spinner
+                    style={{
+                      marginLeft: "7px",
+                      marginTop: "10px",
+                      width: "25px",
+                      height: "25px",
+                      color: cor_terciaria,
+                    }}
+                    animation="border"
+                    as="span"
+                  />
+                )}
+              </>
+            ) : null}
             <div>
               {usuarios[0] ? (
                 <>
@@ -725,7 +750,7 @@ export default function Home() {
                         <Accordion.Toggle
                           as={"h5"}
                           eventKey="1"
-                          ref={accordion_ref}
+                          ref={accordion_candidatos_ref}
                         >
                           <h5
                             id="centralizar"
@@ -804,7 +829,7 @@ export default function Home() {
                         <Accordion.Toggle
                           as={"h5"}
                           eventKey="1"
-                          ref={accordion_ref}
+                          ref={accordion_sorteio_ref}
                         >
                           <h5
                             id="centralizar"
@@ -868,7 +893,8 @@ export default function Home() {
                                     set_input_sorteados(3);
                                   } else {
                                     sortear();
-                                    accordion_ref.current.click();
+                                    accordion_sorteio_ref.current.click();
+                                    accordion_candidatos_ref.current.click();
                                   }
                                 }}
                               >
@@ -893,35 +919,6 @@ export default function Home() {
                   </Accordion>
                 </>
               ) : null}
-
-              {log ? (
-                <>
-                  <p style={{ marginTop: "10px", display: "inline" }}>
-                    {log}
-                    {""}
-                  </p>
-                  {""}
-                  {status_progresso > 0 ? (
-                    <ProgressBar
-                      id="barra"
-                      animated
-                      now={status_progresso * 100}
-                    />
-                  ) : (
-                    <Spinner
-                      style={{
-                        marginLeft: "7px",
-                        marginTop: "10px",
-                        width: "25px",
-                        height: "25px",
-                        color: cor_terciaria,
-                      }}
-                      animation="border"
-                      as="span"
-                    />
-                  )}
-                </>
-              ) : null}
             </div>
           </div>
 
@@ -929,7 +926,7 @@ export default function Home() {
             <Accordion defaultActiveKey="1">
               <Card id="colapso">
                 <Card.Header id="colapso">
-                  <Accordion.Toggle as={"h5"} eventKey="1" ref={accordion_ref}>
+                  <Accordion.Toggle as={"h5"} eventKey="1">
                     <h5
                       id="centralizar"
                       style={{
@@ -999,8 +996,6 @@ export default function Home() {
           ) : null}
         </Container>
       </main>
-
-      <footer></footer>
     </div>
   );
 }

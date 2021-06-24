@@ -3,10 +3,6 @@
 }
 
 body {
-    display: flex;
-    flex-flow: column;
-    height: 100%;
-    -webkit-flex-flow: column;
     background: #1E6F5C !important;
 }
 
@@ -26,7 +22,7 @@ label {
 
 input {
     border-radius: 1vh;
-    background: #01c27e;
+    background: #1E6F5C;
     color: white !important;
     border: 1px solid #00ffc3;
     text-align: center;
@@ -34,8 +30,23 @@ input {
     flex-direction: column;
 }
 
+#logo {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+#card-principal {
+    border: 2px solid black;
+    margin-top: 10px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
 #select {
-    background: #01c27e !important;
+    background: rgb(41, 187, 137) !important;
     color: white !important;
     border-radius: 1vh;
     border: 1px solid #00ffc3;
@@ -81,6 +92,13 @@ input {
     border: 0 solid rgba(0, 0, 0, 0);
 }
 
+#colapso {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+
+}
+
 #nome,
 #posicao {
     padding: 4px;
@@ -105,6 +123,10 @@ input {
         justify-content: start !important;
     }
 
+    #card-principal {
+        border: none;
+    }
+
     #criterios-moveis {
         display: flex;
         align-items: flex-start;
@@ -123,7 +145,6 @@ input {
     }
 
     #botao-sortear,
-    #logo,
     #quantidade_sorteados,
     #colapso,
     #centralizar,
@@ -155,7 +176,6 @@ input {
     }
 
     #botao-sortear,
-    #logo,
     #quantidade_sorteados,
     #colapso,
     #centralizar,
@@ -179,7 +199,9 @@ input {
         width: 80vw !important;
     }
 
-
+    #quantidade_sorteados label {
+        font-size: 0.9rem;
+    }
 
 
     #nome,
