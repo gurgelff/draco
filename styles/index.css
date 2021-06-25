@@ -12,6 +12,7 @@ h4 {
 
 button {
     border: 1px solid #00ffc3 !important;
+    font-size: 0.9rem !important;
 
 }
 
@@ -38,6 +39,7 @@ input {
 
 #card-principal {
     border: 2px solid black;
+    width: 500px;
     margin-top: 10px;
     display: flex;
     flex-direction: column;
@@ -86,6 +88,10 @@ input {
     margin-bottom: 10px;
 }
 
+#sorteados, #candidatos {
+    width: 450px !important;
+}
+
 #colapso,
 #transparente {
     background: rgba(0, 0, 0, 0);
@@ -96,7 +102,6 @@ input {
     display: flex;
     flex-direction: column;
     align-items: center;
-
 }
 
 #nome,
@@ -125,6 +130,7 @@ input {
 
     #card-principal {
         border: none;
+        width: 100vw;
     }
 
     #criterios-moveis {
@@ -138,6 +144,7 @@ input {
         font-size: 0.8rem;
         flex-direction: column;
         height: 27.8vh !important;
+        width: 80vw !important;
     }
 
     #colapso {

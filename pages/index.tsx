@@ -3,6 +3,7 @@
 import React, { useRef, useState } from "react";
 
 import axios from "axios";
+import axios_retry from "axios-retry";
 import { Chance } from "chance";
 import download from "js-file-download";
 import {
@@ -41,6 +42,12 @@ export default function Home() {
     inscritos: "999",
     vip: "99",
   });
+  const [criterios, set_criterios] = useState({
+    like: true,
+    comentou: true,
+    segue: true,
+    nome_valido: true,
+  });
 
   const email_regex = new RegExp(/^[a-z0-9.]+@[a-z0-9]+.[a-z]+.([a-z]+)?$/i);
   const asterisco_regex = new RegExp(/\*\*/);
@@ -53,6 +60,12 @@ export default function Home() {
   const accordion_info_ref = useRef(null);
   const accordion_candidatos_ref = useRef(null);
   const accordion_sorteio_ref = useRef(null);
+
+  axios_retry(axios,
+    {
+      retries: 3,
+      retryDelay: axios_retry.exponentialDelay
+    });
 
   const get_inscritos = async (params) =>
     await axios.get("api/get_subscribers", params);
@@ -155,7 +168,6 @@ export default function Home() {
                 nome_valido: false,
                 mensagem: [],
               };
-              usuario_estruturado.mensagem.push(" Não comentou");
               usuarios_dados.push(usuario_estruturado);
             } else {
               usuarios_dados[indice].segue = true;
@@ -260,14 +272,36 @@ export default function Home() {
     return new Promise((resolve, reject) => {
       try {
         set_log("Atribuindo tickets ");
-        for (const usuario of usuarios_dados) {
-          const condicoes =
-            usuario.segue &&
-            usuario.deu_like &&
-            usuario.comentou &&
-            usuario.nome_valido;
+        for (let usuario of usuarios_dados) {
+          let invalido = false;
 
-          if (condicoes) {
+          // se seguir for um critério exigido
+          if (criterios.segue.executar) {
+            // e o usuário não safistazer esse critério
+            if (!usuario.segue) {
+              invalido = true;  // descarte-o
+            } 
+          }
+
+          if (criterios.like.executar) {
+            if (!usuario.deu_like) {
+              invalido = true;  
+            }
+          }
+          
+          if (criterios.comentou.executar) {
+            if (!usuario.comentou) {
+              invalido = true;                
+            }
+          }
+
+          if (criterios.nome_valido.executar) {            
+            if (!usuario.nome_valido) {
+              invalido = true;
+            }
+          }
+
+          if (!invalido) {
             const indice = usuarios_dados.indexOf(usuario);
             usuarios_dados[indice].tickets = 1;
             usuarios_dados[indice].mensagem.push(" Ok");
@@ -298,6 +332,7 @@ export default function Home() {
           for (const vip of resposta_gift_votes.data.data.reward_rank) {
             let ja_existe = false;
             let indice = 0;
+            let invalido = false;
 
             for (const usuario of usuarios_dados) {
               if (vip.uid == String(usuario.id)) {
@@ -313,7 +348,7 @@ export default function Home() {
                 tickets: 0,
                 segue: false,
                 deu_like: false,
-                comentou: false,
+                comentou: true,
                 nome_valido: false,
                 mensagem: [],
               };
@@ -324,13 +359,35 @@ export default function Home() {
               );
               usuarios_dados.push(vip_estruturado);
             } else {
-              const condicoes =
-                usuarios_dados[indice].segue &&
-                usuarios_dados[indice].deu_like &&
-                usuarios_dados[indice].comentou &&
-                usuarios_dados[indice].nome_valido;
+              const usuario = usuarios_dados[indice];
 
-              if (condicoes) {
+              // se seguir for um critério exigido
+              if (criterios.segue.executar) {
+                // e o usuário não safistazer esse critério
+                if (!usuario.segue) {
+                  invalido = true; // descarte-o
+                }
+              }
+
+              if (criterios.like.executar) {
+                if (!usuario.deu_like) {
+                  invalido = true;
+                }
+              }
+
+              if (criterios.comentou.executar) {
+                if (!usuario.comentou) {
+                  invalido = true;
+                }
+              }
+
+              if (criterios.nome_valido.executar) {
+                if (!usuario.nome_valido) {
+                  invalido = true;
+                }
+              }
+
+              if (!invalido) {
                 usuarios_dados[indice].tickets += parseInt(vip.score);
               } else {
                 usuarios_dados[indice].mensagem.push(
@@ -350,31 +407,24 @@ export default function Home() {
     });
   };
 
-  const [criterios, set_criterios] = useState({
-    like: { executar: true, funcao: checar_likes },
-    comentou: { executar: true, funcao: checar_comentarios },
-    segue: { executar: true, funcao: checar_inscritos },
-    nome_valido: { executar: true, funcao: checar_nomes },
-  });
-
   const executar_tudo = async () => {
     set_modo("API");
     set_log("Iniciando tarefas ");
-    
-    if (criterios.comentou.executar) {
-      await criterios.comentou.funcao();
+
+    if (criterios.comentou) {
+      await checar_comentarios();
     }
 
-    if (criterios.segue.executar) {
-      await criterios.segue.funcao();
+    if (criterios.segue) {
+      await checar_inscritos();
     }
 
-    if (criterios.nome_valido.executar) {
-      await criterios.nome_valido.funcao();
+    if (criterios.nome_valido) {
+      await checar_nomes();
     }
 
-    if (criterios.like.executar) {
-      await criterios.like.funcao();
+    if (criterios.like) {
+      await checar_likes();
     }
 
     await atribuir_tickets();
@@ -421,8 +471,10 @@ export default function Home() {
     const chance = Chance();
 
     if (quantidade_de_sorteados > candidatos_elegiveis) {
-      alert("Número de sorteados é maior do que" +
-            " a lista de candidatos elegíveis!");
+      alert(
+        "Número de sorteados é maior do que" +
+          " a lista de candidatos elegíveis!"
+      );
     } else {
       while (true) {
         const sorteado = chance.weighted(candidatos, pesos);
@@ -505,9 +557,7 @@ export default function Home() {
   };
 
   //@TODO:
-  //       card desktop
-  //       individual refs
-  //       retry
+  // event key 0 | 1
 
   return (
     <div>
@@ -544,7 +594,11 @@ export default function Home() {
             <Accordion defaultActiveKey="0">
               <Card style={{ marginLeft: 0 }} id="colapso">
                 <Card.Header id="colapso">
-                  <Accordion.Toggle as={"h6"} eventKey="1" ref={accordion_info_ref}>
+                  <Accordion.Toggle
+                    as={"h6"}
+                    eventKey="1"
+                    ref={accordion_info_ref}
+                  >
                     <h6
                       style={{
                         background: cor_terciaria,
@@ -604,10 +658,7 @@ export default function Home() {
                             onChange={() => {
                               set_criterios({
                                 ...criterios,
-                                like: {
-                                  ...criterios.like,
-                                  executar: !criterios.like.executar,
-                                },
+                                like: !criterios.like,
                               });
                             }}
                           />
@@ -620,10 +671,7 @@ export default function Home() {
                             onChange={() => {
                               set_criterios({
                                 ...criterios,
-                                segue: {
-                                  ...criterios.segue,
-                                  executar: !criterios.segue.executar,
-                                },
+                                segue: !criterios.segue,
                               });
                             }}
                           />
@@ -638,10 +686,8 @@ export default function Home() {
                             onChange={() => {
                               set_criterios({
                                 ...criterios,
-                                comentou: {
-                                  ...criterios.comentou,
-                                  executar: !criterios.comentou.executar,
-                                },
+                                comentou: !criterios.comentou,
+                                
                               });
                             }}
                           />
@@ -654,10 +700,7 @@ export default function Home() {
                             onChange={() => {
                               set_criterios({
                                 ...criterios,
-                                nome_valido: {
-                                  ...criterios.nome_valido,
-                                  executar: !criterios.nome_valido.executar,
-                                },
+                                nome_valido: !criterios.nome_valido,
                               });
                             }}
                           />
@@ -950,6 +993,7 @@ export default function Home() {
                         style={{
                           overflowY: "scroll",
                           height: "24vh",
+                          width: "50vw",
                           border: `2px solid ${cor_terciaria}`,
                           scrollbarWidth: "none",
                         }}
