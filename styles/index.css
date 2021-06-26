@@ -88,7 +88,15 @@ input {
     margin-bottom: 10px;
 }
 
-#sorteados, #candidatos {
+#nome,
+h5,
+h6 {
+    cursor: pointer !important;
+}
+
+
+#sorteados,
+#candidatos {
     width: 450px !important;
 }
 
@@ -139,6 +147,10 @@ input {
         justify-content: flex-start;
     }
 
+    #quantidade_sorteados {
+        font-size: 0.9rem;
+    }
+    
     #sorteados,
     #candidatos {
         font-size: 0.8rem;
@@ -149,6 +161,18 @@ input {
 
     #colapso {
         flex-direction: column;
+    }
+
+    #barra {
+        width: 200px !important;
+    }
+
+    #spinner-custom {
+        margin-top: 0 !important;
+    }
+
+    .log {
+        display: block;
     }
 
     #botao-sortear,

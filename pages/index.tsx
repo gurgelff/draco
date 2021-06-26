@@ -61,11 +61,10 @@ export default function Home() {
   const accordion_candidatos_ref = useRef(null);
   const accordion_sorteio_ref = useRef(null);
 
-  axios_retry(axios,
-    {
-      retries: 3,
-      retryDelay: axios_retry.exponentialDelay
-    });
+  axios_retry(axios, {
+    retries: 3,
+    retryDelay: axios_retry.exponentialDelay,
+  });
 
   const get_inscritos = async (params) =>
     await axios.get("api/get_subscribers", params);
@@ -168,6 +167,7 @@ export default function Home() {
                 nome_valido: false,
                 mensagem: [],
               };
+              // usuario_estruturado.mensagem.push(" Não comentou");
               usuarios_dados.push(usuario_estruturado);
             } else {
               usuarios_dados[indice].segue = true;
@@ -229,10 +229,6 @@ export default function Home() {
               (usuarios_dados.indexOf(usuario) + 1) / total_comentaristas
             );
 
-            if (!usuario.segue) {
-              usuarios_dados[indice].mensagem.push(" Não segue");
-            }
-
             let deu_like = false;
             const resposta_like = await get_likes({
               params: {
@@ -272,38 +268,48 @@ export default function Home() {
     return new Promise((resolve, reject) => {
       try {
         set_log("Atribuindo tickets ");
-        for (let usuario of usuarios_dados) {
+        for (const usuario of usuarios_dados) {
           let invalido = false;
+          const indice = usuarios_dados.indexOf(usuario);
 
           // se seguir for um critério exigido
-          if (criterios.segue.executar) {
+          if (criterios.segue) {
             // e o usuário não safistazer esse critério
             if (!usuario.segue) {
-              invalido = true;  // descarte-o
-            } 
-          }
-
-          if (criterios.like.executar) {
-            if (!usuario.deu_like) {
-              invalido = true;  
-            }
-          }
-          
-          if (criterios.comentou.executar) {
-            if (!usuario.comentou) {
-              invalido = true;                
-            }
-          }
-
-          if (criterios.nome_valido.executar) {            
-            if (!usuario.nome_valido) {
               invalido = true;
+              usuarios_dados[indice].mensagem.push(" Não segue");
+            } else {
+              usuarios_dados[indice].tickets += 1;
+            }
+          }
+
+          if (criterios.like) {
+            if (!usuario.deu_like) {
+              invalido = true;
+              usuarios_dados[indice].mensagem.push(" Não deu like");
+            } else {
+              usuarios_dados[indice].tickets += 1;
+            }
+          }
+
+          if (criterios.comentou) {
+            if (!usuario.comentou) {
+              invalido = true;
+              usuarios_dados[indice].mensagem.push(" Não comentou");
+            } else {
+              usuarios_dados[indice].tickets += 1;
+            }
+          }
+
+          if (criterios.nome_valido) {
+            if (!usuario.nome_valido) {
+              invalido = true; //mensagem de nome inválido já aplicada
+            } else {
+              usuarios_dados[indice].tickets += 1;
             }
           }
 
           if (!invalido) {
-            const indice = usuarios_dados.indexOf(usuario);
-            usuarios_dados[indice].tickets = 1;
             usuarios_dados[indice].mensagem.push(" Ok");
           }
         }
@@ -332,7 +338,6 @@ export default function Home() {
           for (const vip of resposta_gift_votes.data.data.reward_rank) {
             let ja_existe = false;
             let indice = 0;
-            let invalido = false;
 
             for (const usuario of usuarios_dados) {
               if (vip.uid == String(usuario.id)) {
@@ -345,57 +350,18 @@ export default function Home() {
               let vip_estruturado = {
                 nome: vip.nickname,
                 id: vip.uid,
-                tickets: 0,
+                tickets: parseInt(vip.score),
                 segue: false,
                 deu_like: false,
-                comentou: true,
+                comentou: false,
                 nome_valido: false,
                 mensagem: [],
               };
-              vip_estruturado.mensagem.push(
-                " Fez doação mas" +
-                  " não completou todas as tarefas." +
-                  " Nenhum ticket adicionado"
-              );
+              vip_estruturado.mensagem.push(" Fez doação apenas");
               usuarios_dados.push(vip_estruturado);
             } else {
-              const usuario = usuarios_dados[indice];
-
-              // se seguir for um critério exigido
-              if (criterios.segue.executar) {
-                // e o usuário não safistazer esse critério
-                if (!usuario.segue) {
-                  invalido = true; // descarte-o
-                }
-              }
-
-              if (criterios.like.executar) {
-                if (!usuario.deu_like) {
-                  invalido = true;
-                }
-              }
-
-              if (criterios.comentou.executar) {
-                if (!usuario.comentou) {
-                  invalido = true;
-                }
-              }
-
-              if (criterios.nome_valido.executar) {
-                if (!usuario.nome_valido) {
-                  invalido = true;
-                }
-              }
-
-              if (!invalido) {
-                usuarios_dados[indice].tickets += parseInt(vip.score);
-              } else {
-                usuarios_dados[indice].mensagem.push(
-                  " Fez doação mas" +
-                    " não completou todas as tarefas." +
-                    " Nenhum ticket adicionado"
-                );
-              }
+              usuarios_dados[indice].tickets += parseInt(vip.score);
+              usuarios_dados[indice].mensagem.push(" Fez doação");
             }
           }
           resolve(usuarios_dados);
@@ -556,8 +522,8 @@ export default function Home() {
     set_atributos_precisao(novos_atributos);
   };
 
-  //@TODO:
-  // event key 0 | 1
+  //@TODO: mostrar candidato com comentário
+  //@TODO: adicionar heurística - 1 sorteado por vez
 
   return (
     <div>
@@ -687,7 +653,6 @@ export default function Home() {
                               set_criterios({
                                 ...criterios,
                                 comentou: !criterios.comentou,
-                                
                               });
                             }}
                           />
@@ -756,34 +721,51 @@ export default function Home() {
                 </Accordion.Collapse>
               </Card>
             </Accordion>
-            {log ? (
-              <>
-                <p style={{ marginTop: "10px", display: "inline" }}>
-                  {log}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {log ? (
+                <div>
+                  <p
+                    id="centralizar"
+                    className="log"
+                    style={{ marginTop: "10px", display: "inline" }}
+                  >
+                    {log}
+                    {""}
+                  </p>
                   {""}
-                </p>
-                {""}
-                {status_progresso > 0 ? (
-                  <ProgressBar
-                    id="barra"
-                    animated
-                    now={status_progresso * 100}
-                  />
-                ) : (
-                  <Spinner
-                    style={{
-                      marginLeft: "7px",
-                      marginTop: "10px",
-                      width: "25px",
-                      height: "25px",
-                      color: cor_terciaria,
-                    }}
-                    animation="border"
-                    as="span"
-                  />
-                )}
-              </>
-            ) : null}
+                  {status_progresso > 0 ? (
+                    <div style={{display: "block"}}>
+                      <ProgressBar
+                        style={{
+                          width: "300px",
+                        }}
+                        id="barra"
+                        animated
+                        now={status_progresso * 100}
+                      />
+                    </div>
+                  ) : (
+                      <Spinner
+                      id="spinner-custom"
+                      style={{
+                        marginLeft: "7px",
+                        width: "25px",
+                        height: "25px",
+                        color: cor_terciaria,
+                      }}
+                      animation="border"
+                      as="span"
+                    />
+                  )}
+                </div>
+              ) : null}
+            </div>
             <div>
               {usuarios[0] ? (
                 <>
@@ -861,12 +843,7 @@ export default function Home() {
                               ))}
                             </ListGroup>
                           </div>
-                        </Card.Body>
-                      </Accordion.Collapse>
-                    </Card>
-                  </Accordion>
-
-                  <Accordion defaultActiveKey="1">
+                 <Accordion style={{width: "300px"}} defaultActiveKey="1">
                     <Card id="colapso">
                       <Card.Header id="colapso">
                         <Accordion.Toggle
@@ -936,7 +913,6 @@ export default function Home() {
                                     set_input_sorteados(3);
                                   } else {
                                     sortear();
-                                    accordion_sorteio_ref.current.click();
                                     accordion_candidatos_ref.current.click();
                                   }
                                 }}
@@ -960,6 +936,12 @@ export default function Home() {
                       </Accordion.Collapse>
                     </Card>
                   </Accordion>
+                
+                        </Card.Body>
+                      </Accordion.Collapse>
+                    </Card>
+                  </Accordion>
+
                 </>
               ) : null}
             </div>
