@@ -76,6 +76,7 @@ input {
 #quantidade_sorteados {
     display: flex;
     flex-direction: row;
+    font-size: 0.9rem;
 }
 
 #quantidade_sorteados input {
@@ -94,10 +95,24 @@ h6 {
     cursor: pointer !important;
 }
 
-
 #sorteados,
 #candidatos {
     width: 450px !important;
+}
+
+#vencedor img {
+    border-radius: 50%;
+}
+
+#vencedor p {
+    overflow: hidden;
+    max-height: 9ch;
+    font-style: italic;
+}
+
+#cabecalho-vencedor {
+    display: flex;
+    align-items: center;
 }
 
 #colapso,
@@ -147,10 +162,6 @@ h6 {
         justify-content: flex-start;
     }
 
-    #quantidade_sorteados {
-        font-size: 0.9rem;
-    }
-    
     #sorteados,
     #candidatos {
         font-size: 0.8rem;

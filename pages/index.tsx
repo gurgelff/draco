@@ -22,6 +22,7 @@ import {
 } from "react-bootstrap";
 
 import Head from "next/head";
+import Image from "next/image";
 
 export default function Home() {
   let usuarios_dados = [];
@@ -33,6 +34,7 @@ export default function Home() {
   const [log, set_log] = useState("");
   const [status_progresso, set_status_progresso] = useState(0);
   const [modo, set_modo] = useState("");
+  const [indice_vencedor, set_indice_vencedor] = useState(0);
   const [input_sorteados, set_input_sorteados] = useState(3);
   const [input_video_id, set_input_video_id] = useState("27716306792649728");
   const [input_canal_id, set_input_canal_id] = useState("26984287292531712");
@@ -55,6 +57,10 @@ export default function Home() {
   const cor_primaria = "#1E6F5C";
   const cor_secundaria = "#289672";
   const cor_terciaria = "#29BB89";
+
+  const sem_foto =
+    "https://upload.wikimedia.org/wikipedia/commons/"
+    + "thumb/2/24/Missing_avatar.svg/240px-Missing_avatar.svg.png";
 
   const input_escondido = useRef(null);
   const accordion_info_ref = useRef(null);
@@ -111,6 +117,8 @@ export default function Home() {
                 deu_like: false,
                 comentou: true,
                 nome_valido: false,
+                comentario: comentador.content,
+                foto: comentador.user.avatar,
                 mensagem: [],
               };
               usuarios_dados.push(comentador_estruturado);
@@ -165,9 +173,10 @@ export default function Home() {
                 deu_like: false,
                 comentou: false,
                 nome_valido: false,
+                comentario: "",
+                foto: inscrito.avatar,
                 mensagem: [],
               };
-              // usuario_estruturado.mensagem.push(" Não comentou");
               usuarios_dados.push(usuario_estruturado);
             } else {
               usuarios_dados[indice].segue = true;
@@ -355,6 +364,7 @@ export default function Home() {
                 deu_like: false,
                 comentou: false,
                 nome_valido: false,
+                foto: vip.avatar,
                 mensagem: [],
               };
               vip_estruturado.mensagem.push(" Fez doação apenas");
@@ -740,7 +750,7 @@ export default function Home() {
                   </p>
                   {""}
                   {status_progresso > 0 ? (
-                    <div style={{display: "block"}}>
+                    <div style={{ display: "block" }}>
                       <ProgressBar
                         style={{
                           width: "300px",
@@ -751,7 +761,7 @@ export default function Home() {
                       />
                     </div>
                   ) : (
-                      <Spinner
+                    <Spinner
                       id="spinner-custom"
                       style={{
                         marginLeft: "7px",
@@ -843,105 +853,111 @@ export default function Home() {
                               ))}
                             </ListGroup>
                           </div>
-                 <Accordion style={{width: "300px"}} defaultActiveKey="1">
-                    <Card id="colapso">
-                      <Card.Header id="colapso">
-                        <Accordion.Toggle
-                          as={"h5"}
-                          eventKey="1"
-                          ref={accordion_sorteio_ref}
-                        >
-                          <h5
-                            id="centralizar"
-                            style={{
-                              background: "rgba(0,0,0,0)",
-                              borderColor: cor_terciaria,
-                              padding: "10px",
-                              border: "1px solid #00ffc3",
-                              borderRadius: "1.2vh",
-                              width: "300px",
-                              textAlign: "center",
-                            }}
+                          <Accordion
+                            style={{ width: "300px" }}
+                            defaultActiveKey="1"
                           >
-                            Informações de Sorteio
-                          </h5>
-                        </Accordion.Toggle>
-                      </Card.Header>
-                      <Accordion.Collapse eventKey="1">
-                        <Card.Body id="colapso" style={{ paddingTop: 0 }}>
-                          <div>
-                            <div id="quantidade_sorteados">
-                              <label>Quantidade de Sorteados</label>
-                              <input
-                                type="number"
-                                name="quantity"
-                                value={input_sorteados}
-                                onInput={(event) =>
-                                  set_input_sorteados(
-                                    parseInt(event.target.value)
-                                  )
-                                }
-                                min={1}
-                                style={{ color: "black" }}
-                              />
-                            </div>
+                            <Card id="colapso">
+                              <Card.Header id="colapso">
+                                <Accordion.Toggle
+                                  as={"h5"}
+                                  eventKey="1"
+                                  ref={accordion_sorteio_ref}
+                                >
+                                  <h5
+                                    id="centralizar"
+                                    style={{
+                                      background: "rgba(0,0,0,0)",
+                                      borderColor: cor_terciaria,
+                                      padding: "10px",
+                                      border: "1px solid #00ffc3",
+                                      borderRadius: "1.2vh",
+                                      width: "300px",
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    Informações de Sorteio
+                                  </h5>
+                                </Accordion.Toggle>
+                              </Card.Header>
+                              <Accordion.Collapse eventKey="1">
+                                <Card.Body
+                                  id="colapso"
+                                  style={{ paddingTop: 0 }}
+                                >
+                                  <div>
+                                    <div id="quantidade_sorteados">
+                                      <label>Quantidade de Sorteados</label>
+                                      <input
+                                        type="number"
+                                        name="quantity"
+                                        value={input_sorteados}
+                                        onInput={(event) =>
+                                          set_input_sorteados(
+                                            parseInt(event.target.value)
+                                          )
+                                        }
+                                        min={1}
+                                        style={{ color: "black" }}
+                                      />
+                                    </div>
 
-                            <div id="botao-sortear">
-                              <Button
-                                style={{
-                                  background: cor_terciaria,
-                                  borderColor: cor_terciaria,
-                                  marginTop: "10px",
-                                  paddingRight: "20px",
-                                }}
-                                onClick={() => {
-                                  //@TODO: transformar numa função separada
-                                  const valor = input_sorteados;
+                                    <div id="botao-sortear">
+                                      <Button
+                                        style={{
+                                          background: cor_terciaria,
+                                          borderColor: cor_terciaria,
+                                          marginTop: "10px",
+                                          paddingRight: "20px",
+                                        }}
+                                        onClick={() => {
+                                          //@TODO: transformar numa função separada
+                                          const valor = input_sorteados;
 
-                                  if (!valor || valor == "0") {
-                                    alert("Valor nulo não permitido.");
-                                    set_input_sorteados(3);
-                                    return;
-                                  }
+                                          if (!valor || valor == "0") {
+                                            alert("Valor nulo não permitido.");
+                                            set_input_sorteados(3);
+                                            return;
+                                          }
 
-                                  if (typeof parseInt(valor) != "number") {
-                                    alert(
-                                      "Campo de quantidade de sorteados " +
-                                        "só pode receber valores inteiros maiores " +
-                                        "que zero. "
-                                    );
-                                    set_input_sorteados(3);
-                                  } else {
-                                    sortear();
-                                    accordion_candidatos_ref.current.click();
-                                  }
-                                }}
-                              >
-                                Sortear
-                              </Button>
-                              <Button
-                                style={{
-                                  background: cor_terciaria,
-                                  borderColor: cor_terciaria,
-                                  marginTop: "10px",
-                                  marginLeft: "10px",
-                                }}
-                                onClick={baixar_arquivo}
-                              >
-                                Baixar Arquivo
-                              </Button>
-                            </div>
-                          </div>
+                                          if (
+                                            typeof parseInt(valor) != "number"
+                                          ) {
+                                            alert(
+                                              "Campo de quantidade de sorteados " +
+                                                "só pode receber valores inteiros maiores " +
+                                                "que zero. "
+                                            );
+                                            set_input_sorteados(3);
+                                          } else {
+                                            sortear();
+                                            accordion_candidatos_ref.current.click();
+                                          }
+                                        }}
+                                      >
+                                        Sortear
+                                      </Button>
+                                      <Button
+                                        style={{
+                                          background: cor_terciaria,
+                                          borderColor: cor_terciaria,
+                                          marginTop: "10px",
+                                          marginLeft: "10px",
+                                        }}
+                                        onClick={baixar_arquivo}
+                                      >
+                                        Baixar Arquivo
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </Card.Body>
+                              </Accordion.Collapse>
+                            </Card>
+                          </Accordion>
                         </Card.Body>
                       </Accordion.Collapse>
                     </Card>
                   </Accordion>
-                
-                        </Card.Body>
-                      </Accordion.Collapse>
-                    </Card>
-                  </Accordion>
-
                 </>
               ) : null}
             </div>
@@ -973,15 +989,33 @@ export default function Home() {
                     <>
                       <div
                         style={{
-                          overflowY: "scroll",
                           height: "24vh",
                           width: "50vw",
                           border: `2px solid ${cor_terciaria}`,
-                          scrollbarWidth: "none",
                         }}
                         id="sorteados"
                       >
-                        {sorteados_final.map((sorteado, indice) => (
+                        <section id="vencedor">
+                          <div id="cabecalho-vencedor">
+                            <Image
+                              width={80}
+                              height={80}
+                              src={
+                                sorteados_final[indice_vencedor].foto ?
+                                sorteados_final[indice_vencedor].foto :
+                                sem_foto
+                              }
+                            />
+                            <span>{sorteados_final[indice_vencedor].nome}</span>
+                          </div>
+                          <p>
+                            {sorteados_final[
+                              indice_vencedor
+                            ].comentario.substring(0, 180)}
+                            ...
+                          </p>
+                        </section>
+                        {/* {sorteados_final.map((sorteado, indice) => (
                           <div key={sorteado.id * indice}>
                             <ListGroup>
                               <ListGroup.Item
@@ -1012,7 +1046,7 @@ export default function Home() {
                               </ListGroup.Item>
                             </ListGroup>
                           </div>
-                        ))}
+                        ))} */}
                       </div>
                     </>
                   </Card.Body>
