@@ -174,7 +174,7 @@ export default function Home() {
                 deu_like: false,
                 comentou: false,
                 nome_valido: false,
-                comentario: "",
+                comentario: [""],
                 foto: inscrito.avatar,
                 mensagem: [],
               };
@@ -308,7 +308,6 @@ export default function Home() {
 
           // se não estiver inválido, checar condições
           if (!invalido) {
-
             if (criterios.segue) {
               if (!usuario.segue) {
                 invalido = true;
@@ -413,7 +412,6 @@ export default function Home() {
               }
 
               usuarios_dados[indice].mensagem.push(" Fez doação");
-
             }
           }
           resolve(usuarios_dados);
@@ -428,10 +426,9 @@ export default function Home() {
   const executar_tudo = async () => {
     set_modo("API");
     set_log("Iniciando tarefas ");
-
-    if (criterios.comentou) {
-      await checar_comentarios();
-    }
+    
+    // sempre executar
+    await checar_comentarios();
 
     if (criterios.segue) {
       await checar_inscritos();
@@ -598,7 +595,28 @@ export default function Home() {
     }
   };
 
-  //@TODO: invalidar nome invalido e hashtag
+  const devo_sortear = () => {
+    const valor = input_sorteados;
+
+    if (!valor || valor == "0") {
+      alert("Valor nulo não permitido.");
+      set_input_sorteados(3);
+      return;
+    }
+
+    if (typeof parseInt(valor) != "number") {
+      alert(
+        "Campo de quantidade de sorteados " +
+          "só pode receber valores inteiros maiores " +
+          "que zero. "
+      );
+      set_input_sorteados(3);
+    } else {
+      set_indice_vencedor(0);
+      sortear();
+      accordion_candidatos_ref.current.click();
+    }
+  };
 
   return (
     <div>
@@ -692,7 +710,7 @@ export default function Home() {
                     />
                     <div id="criterios-moveis">
                       <div id="criterios">
-                        <div id="uebra-linha">
+                        <div id="quebra-linha">
                           <input
                             type="checkbox"
                             defaultChecked
@@ -705,7 +723,7 @@ export default function Home() {
                           />
                           <label>Like</label>
                         </div>
-                        <div id="uebra-linha">
+                        <div id="quebra-linha">
                           <input
                             type="checkbox"
                             defaultChecked
@@ -720,7 +738,7 @@ export default function Home() {
                         </div>
                       </div>
                       <div id="criterios">
-                        <div id="uebra-linha">
+                        <div id="quebra-linha">
                           <input
                             type="checkbox"
                             defaultChecked
@@ -733,7 +751,7 @@ export default function Home() {
                           />
                           <label>#dudabra</label>
                         </div>
-                        <div id="uebra-linha">
+                        <div id="quebra-linha">
                           <input
                             type="checkbox"
                             defaultChecked
@@ -909,6 +927,8 @@ export default function Home() {
                                             {`${usuario.mensagem
                                               .join(",")
                                               .replace(/,/g, ", ")}`}
+                                            <br/>
+                                            { `Tickets: ${usuario.tickets}`}
                                           </Card.Body>
                                         </Accordion.Collapse>
                                       </Card>
@@ -975,30 +995,7 @@ export default function Home() {
                                           marginTop: "10px",
                                           paddingRight: "20px",
                                         }}
-                                        onClick={() => {
-                                          //@TODO: transformar numa função separada
-                                          const valor = input_sorteados;
-
-                                          if (!valor || valor == "0") {
-                                            alert("Valor nulo não permitido.");
-                                            set_input_sorteados(3);
-                                            return;
-                                          }
-
-                                          if (
-                                            typeof parseInt(valor) != "number"
-                                          ) {
-                                            alert(
-                                              "Campo de quantidade de sorteados " +
-                                                "só pode receber valores inteiros maiores " +
-                                                "que zero. "
-                                            );
-                                            set_input_sorteados(3);
-                                          } else {
-                                            sortear();
-                                            accordion_candidatos_ref.current.click();
-                                          }
-                                        }}
+                                        onClick={devo_sortear}
                                       >
                                         Sortear
                                       </Button>
@@ -1088,11 +1085,13 @@ export default function Home() {
                           </div>
                           <p>
                             {sorteados_final[indice_vencedor].comentario[0]
-                              .length <= 100
                               ? sorteados_final[indice_vencedor].comentario[0]
-                              : sorteados_final[
-                                  indice_vencedor
-                                ].comentario[0].substring(0, 100) + "..."}
+                                  .length <= 100
+                                ? sorteados_final[indice_vencedor].comentario[0]
+                                : sorteados_final[
+                                    indice_vencedor
+                                  ].comentario[0].substring(0, 100) + "..."
+                              : "{Nenhum Comentário}"}
                           </p>
                           <p>{`Tickets: ${sorteados_final[indice_vencedor].tickets}`}</p>
                         </section>

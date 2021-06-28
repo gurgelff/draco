@@ -182,7 +182,6 @@ h6 {
     #candidatos {
         font-size: 0.8rem;
         flex-direction: column;
-        height: 27.8vh !important;
         width: 80vw !important;
     }
 
