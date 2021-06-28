@@ -102,12 +102,23 @@ h6 {
 
 #vencedor img {
     border-radius: 50%;
+    width: 70px;
+}
+
+#imagem {
+    margin: 5px 10px;
+}
+
+#vencedor button {
+    border: 1px solid #00ffc3 !important;
+    background: none;
+    border-radius: 1.2vh;
 }
 
 #vencedor p {
-    overflow: hidden;
-    max-height: 9ch;
     font-style: italic;
+    margin-left: 10px;
+    justify-content: flex-start;
 }
 
 #cabecalho-vencedor {

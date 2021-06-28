@@ -38,6 +38,7 @@ export default function Home() {
   const [input_sorteados, set_input_sorteados] = useState(3);
   const [input_video_id, set_input_video_id] = useState("27716306792649728");
   const [input_canal_id, set_input_canal_id] = useState("26984287292531712");
+  const [foto, set_foto] = useState("/luck.svg");
   const [atributos_precisao, set_atributos_precisao] = useState({
     likes: "99",
     comentarios: "999",
@@ -58,9 +59,8 @@ export default function Home() {
   const cor_secundaria = "#289672";
   const cor_terciaria = "#29BB89";
 
-  const sem_foto =
-    "https://upload.wikimedia.org/wikipedia/commons/"
-    + "thumb/2/24/Missing_avatar.svg/240px-Missing_avatar.svg.png";
+  const sem_foto = "/sem_foto.png";
+  const spinner_gif = "/spinner.gif";
 
   const input_escondido = useRef(null);
   const accordion_info_ref = useRef(null);
@@ -532,8 +532,34 @@ export default function Home() {
     set_atributos_precisao(novos_atributos);
   };
 
-  //@TODO: mostrar candidato com comentário
+  const mudar_indice = (operacao) => {
+    if (operacao == "+") {
+      if (indice_vencedor < sorteados_final.length - 1) {
+        set_foto(spinner_gif);
+        set_indice_vencedor(indice_vencedor + 1);
+      }
+    }
+
+    if (operacao == "-") {
+      if (indice_vencedor - 1 >= 0) {
+        set_foto(spinner_gif);
+        set_indice_vencedor(indice_vencedor - 1);
+      }
+    }
+  };
+
+  const mudar_foto = (src) => {
+    if (src) {
+      set_foto(src);
+    } else {
+      set_foto(sem_foto);
+    }
+  }
+
+  //@TODO: botão de avançar/voltar << >>
   //@TODO: adicionar heurística - 1 sorteado por vez
+
+  //@TODO: invalidar nome invalido e hashtag
 
   return (
     <div>
@@ -997,56 +1023,51 @@ export default function Home() {
                       >
                         <section id="vencedor">
                           <div id="cabecalho-vencedor">
-                            <Image
-                              width={80}
-                              height={80}
-                              src={
-                                sorteados_final[indice_vencedor].foto ?
-                                sorteados_final[indice_vencedor].foto :
-                                sem_foto
-                              }
-                            />
+                            <div id="imagem">
+                              <Image
+                                width={70}
+                                height={70}
+                                src={foto}
+                                onLoad={() => {
+                                  mudar_foto(sorteados_final[indice_vencedor].foto)
+                                }}
+                              />
+                            </div>
                             <span>{sorteados_final[indice_vencedor].nome}</span>
                           </div>
                           <p>
-                            {sorteados_final[
-                              indice_vencedor
-                            ].comentario.substring(0, 180)}
-                            ...
+                            {sorteados_final[indice_vencedor].comentario
+                              .length <= 100
+                              ? sorteados_final[indice_vencedor].comentario
+                              : sorteados_final[
+                                  indice_vencedor
+                                ].comentario.substring(0, 100) + "..."}
                           </p>
                         </section>
-                        {/* {sorteados_final.map((sorteado, indice) => (
-                          <div key={sorteado.id * indice}>
-                            <ListGroup>
-                              <ListGroup.Item
-                                key={sorteado.id * indice * indice}
-                                style={{
-                                  background: cor_secundaria,
-                                  color: "white",
-                                }}
-                              >
-                                <Accordion defaultActiveKey="0">
-                                  <Card id="transparente">
-                                    <Card.Header id="transparente">
-                                      <Accordion.Toggle
-                                        as={"span"}
-                                        eventKey="1"
-                                      >
-                                        <span id="posicao">{`#${
-                                          indice + 1
-                                        }`}</span>{" "}
-                                        <span id="nome">{`${sorteado.nome}`}</span>
-                                      </Accordion.Toggle>
-                                    </Card.Header>
-                                    <Accordion.Collapse eventKey="1">
-                                      <Card.Body id="transparente">{`Tickets: ${sorteado.tickets}`}</Card.Body>
-                                    </Accordion.Collapse>
-                                  </Card>
-                                </Accordion>
-                              </ListGroup.Item>
-                            </ListGroup>
-                          </div>
-                        ))} */}
+                      </div>
+                      <div
+                        id="vencedor"
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          width: "100%",
+                          marginTop: "7px",
+                        }}
+                      >
+                        <button
+                          onClick={() => {
+                            mudar_indice("-");
+                          }}
+                        >
+                          {"<<"}
+                        </button>
+                        <button
+                          onClick={() => {
+                            mudar_indice("+");
+                          }}
+                        >
+                          {">>"}
+                        </button>
                       </div>
                     </>
                   </Card.Body>
