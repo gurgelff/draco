@@ -10,7 +10,7 @@ const handler = nc()
 .get(async (req, res) => {
         const gift_votes_url =
             `https://cos.tv/api/v1/video/giftInfo?vid=${req.query.id}` +
-            `&showRank=1&limit=99&lastSocre=`; //@TODO: limit 100
+            `&showRank=1&limit=${req.query.quantidade_vip}&lastSocre=`;
         const response = await axios.get(gift_votes_url);
         res.json(response.data);
     });

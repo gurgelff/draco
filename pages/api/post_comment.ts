@@ -14,7 +14,7 @@ const handler = nc()
             order_by: "like_count",
             sort: "DESC",
             page: "1",
-            pagesize: "999" //999
+            pagesize: req.body.quantidade_comentarios
         };
         const response = await axios.post(comentarios_url, post_comentarios);
         res.json(response.data);

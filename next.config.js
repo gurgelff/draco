@@ -1,5 +1,8 @@
 // next.config.js
 module.exports = {
+  images: {
+    domains: ["img.contentos.io", "upload.wikimedia.org"],
+  },
   async headers() {
     return [
       {

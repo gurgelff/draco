@@ -3,6 +3,7 @@
 import React, { useRef, useState } from "react";
 
 import axios from "axios";
+import axios_retry from "axios-retry";
 import { Chance } from "chance";
 import download from "js-file-download";
 import {
@@ -21,6 +22,7 @@ import {
 } from "react-bootstrap";
 
 import Head from "next/head";
+import Image from "next/image";
 
 export default function Home() {
   let usuarios_dados = [];
@@ -32,11 +34,24 @@ export default function Home() {
   const [log, set_log] = useState("");
   const [status_progresso, set_status_progresso] = useState(0);
   const [modo, set_modo] = useState("");
+  const [indice_vencedor, set_indice_vencedor] = useState(0);
   const [input_sorteados, set_input_sorteados] = useState(3);
   const [input_video_id, set_input_video_id] = useState("27716306792649728");
   const [input_canal_id, set_input_canal_id] = useState("26984287292531712");
+  const [foto, set_foto] = useState("/luck.svg");
+  const [atributos_precisao, set_atributos_precisao] = useState({
+    likes: "99",
+    comentarios: "999",
+    inscritos: "999",
+    vip: "99",
+  });
+  const [criterios, set_criterios] = useState({
+    like: true,
+    comentou: true,
+    segue: true,
+    nome_valido: true,
+  });
 
-  const video_id = "27716306792649728";
   const email_regex = new RegExp(/^[a-z0-9.]+@[a-z0-9]+.[a-z]+.([a-z]+)?$/i);
   const asterisco_regex = new RegExp(/\*\*/);
 
@@ -44,8 +59,18 @@ export default function Home() {
   const cor_secundaria = "#289672";
   const cor_terciaria = "#29BB89";
 
+  const sem_foto = "/sem_foto.png";
+  const spinner_gif = "/spinner.gif";
+
   const input_escondido = useRef(null);
-  const accordion_ref = useRef(null);
+  const accordion_info_ref = useRef(null);
+  const accordion_candidatos_ref = useRef(null);
+  const accordion_sorteio_ref = useRef(null);
+
+  axios_retry(axios, {
+    retries: 3,
+    retryDelay: axios_retry.exponentialDelay,
+  });
 
   const get_inscritos = async (params) =>
     await axios.get("api/get_subscribers", params);
@@ -66,6 +91,7 @@ export default function Home() {
 
           const dados_comentarios = await get_comentarios({
             id: input_video_id,
+            quantidade_comentarios: atributos_precisao.comentarios,
           });
 
           const lista_de_comentadores = dados_comentarios.data.data.list;
@@ -91,16 +117,18 @@ export default function Home() {
                 deu_like: false,
                 comentou: true,
                 nome_valido: false,
+                comentario: [comentador.content],
+                foto: comentador.user.avatar,
                 mensagem: [],
               };
               usuarios_dados.push(comentador_estruturado);
               total_comentaristas += 1;
             } else {
               usuarios_dados[indice].comentou = true;
+              usuarios_dados[indice].comentario.push(comentador.content);
             }
           }
-          set_log;
-          ("Finalizada a obtenção de comentários");
+          set_log("Finalizada a obtenção de comentários");
           resolve(usuarios_dados);
         } catch (error) {
           set_log(`Erro ao obter comentários: ${error}`);
@@ -119,6 +147,7 @@ export default function Home() {
           const dados_inscritos = await get_inscritos({
             params: {
               id: input_canal_id,
+              quantidade_inscritos: atributos_precisao.inscritos,
             },
           });
 
@@ -145,9 +174,10 @@ export default function Home() {
                 deu_like: false,
                 comentou: false,
                 nome_valido: false,
+                comentario: [""],
+                foto: inscrito.avatar,
                 mensagem: [],
               };
-              usuario_estruturado.mensagem.push(" Não comentou");
               usuarios_dados.push(usuario_estruturado);
             } else {
               usuarios_dados[indice].segue = true;
@@ -209,14 +239,11 @@ export default function Home() {
               (usuarios_dados.indexOf(usuario) + 1) / total_comentaristas
             );
 
-            if (!usuario.segue) {
-              usuarios_dados[indice].mensagem.push(" Não segue");
-            }
-
             let deu_like = false;
             const resposta_like = await get_likes({
               params: {
                 id: usuario.id,
+                quantidade_likes: atributos_precisao.likes,
               },
             });
 
@@ -231,7 +258,8 @@ export default function Home() {
             } else {
               usuarios_dados[indice].deu_like = false;
               usuarios_dados[indice].mensagem.push(
-                " Não deu like nos últimos 100 vídeos"
+                ` Não deu like nos últimos 
+                ${atributos_precisao.likes} vídeos curtidos`
               );
             }
           }
@@ -251,16 +279,56 @@ export default function Home() {
       try {
         set_log("Atribuindo tickets ");
         for (const usuario of usuarios_dados) {
-          const condicoes =
-            usuario.segue &&
-            usuario.deu_like &&
-            usuario.comentou &&
-            usuario.nome_valido;
+          let invalido = false;
+          const indice = usuarios_dados.indexOf(usuario);
 
-          if (condicoes) {
-            const indice = usuarios_dados.indexOf(usuario);
-            usuarios_dados[indice].tickets = 1;
-            usuarios_dados[indice].mensagem.push(" Ok");
+          // se ter nome válido for um critério exigido
+          if (criterios.nome_valido) {
+            // e o usuário não safistazer esse critério
+            if (!usuario.nome_valido) {
+              invalido = true; // descarte-o
+            }
+          }
+
+          if (criterios.comentou && !invalido) {
+            let comentou_hashtag = false;
+            for (const comentario of usuario.comentario) {
+              if (comentario.toLowerCase().includes("#dudabra")) {
+                comentou_hashtag = true;
+              }
+            }
+
+            if (!comentou_hashtag) {
+              invalido = true;
+              usuarios_dados[indice].mensagem.push(" Não comentou #dudabra");
+            } else {
+              usuarios_dados[indice].tickets += 1;
+            }
+          }
+
+          // se não estiver inválido, checar condições
+          if (!invalido) {
+            if (criterios.segue) {
+              if (!usuario.segue) {
+                invalido = true;
+                usuarios_dados[indice].mensagem.push(" Não segue");
+              } else {
+                usuarios_dados[indice].tickets += 1;
+              }
+            }
+
+            if (criterios.like) {
+              if (!usuario.deu_like) {
+                invalido = true;
+                usuarios_dados[indice].mensagem.push(" Não deu like");
+              } else {
+                usuarios_dados[indice].tickets += 1;
+              }
+            }
+
+            if (!invalido) {
+              usuarios_dados[indice].mensagem.push(" Ok");
+            }
           }
         }
         resolve(usuarios_dados);
@@ -281,11 +349,13 @@ export default function Home() {
           const resposta_gift_votes = await get_gift_votes({
             params: {
               id: input_video_id,
+              quantidade_vip: atributos_precisao.vip,
             },
           });
 
           for (const vip of resposta_gift_votes.data.data.reward_rank) {
             let ja_existe = false;
+            let invalido = false;
             let indice = 0;
 
             for (const usuario of usuarios_dados) {
@@ -304,30 +374,44 @@ export default function Home() {
                 deu_like: false,
                 comentou: false,
                 nome_valido: false,
+                foto: vip.avatar,
                 mensagem: [],
               };
-              vip_estruturado.mensagem.push(
-                " Fez doação mas" +
-                  " não completou todas as tarefas." +
-                  " Nenhum ticket adicionado"
-              );
+              vip_estruturado.mensagem.push(" Fez doação apenas");
               usuarios_dados.push(vip_estruturado);
             } else {
-              const condicoes =
-                usuarios_dados[indice].segue &&
-                usuarios_dados[indice].deu_like &&
-                usuarios_dados[indice].comentou &&
-                usuarios_dados[indice].nome_valido;
-
-              if (condicoes) {
-                usuarios_dados[indice].tickets += parseInt(vip.score);
-              } else {
-                usuarios_dados[indice].mensagem.push(
-                  " Fez doação mas" +
-                    " não completou todas as tarefas." +
-                    " Nenhum ticket adicionado"
-                );
+              const usuario = usuarios_dados[indice];
+              // se ter nome válido for um critério exigido
+              if (criterios.nome_valido) {
+                // e o usuário não safistazer esse critério
+                if (!usuario.nome_valido) {
+                  invalido = true; // descarte-o
+                }
               }
+
+              if (criterios.comentou && !invalido) {
+                let comentou_hashtag = false;
+                for (const comentario of usuario.comentario) {
+                  if (comentario.toLowerCase().includes("#dudabra")) {
+                    comentou_hashtag = true;
+                  }
+                }
+
+                if (!comentou_hashtag) {
+                  invalido = true;
+                  usuarios_dados[indice].mensagem.push(
+                    " Não comentou #dudabra"
+                  );
+                } else {
+                  usuarios_dados[indice].tickets += 1;
+                }
+              }
+
+              if (!invalido) {
+                usuarios_dados[indice].tickets += parseInt(vip.score);
+              }
+
+              usuarios_dados[indice].mensagem.push(" Fez doação");
             }
           }
           resolve(usuarios_dados);
@@ -342,12 +426,25 @@ export default function Home() {
   const executar_tudo = async () => {
     set_modo("API");
     set_log("Iniciando tarefas ");
+    
+    // sempre executar
     await checar_comentarios();
-    await checar_inscritos();
-    await checar_nomes();
-    await checar_likes();
+
+    if (criterios.segue) {
+      await checar_inscritos();
+    }
+
+    if (criterios.nome_valido) {
+      await checar_nomes();
+    }
+
+    if (criterios.like) {
+      await checar_likes();
+    }
+
     await atribuir_tickets();
     await checar_vip();
+
     set_usuarios(usuarios_dados);
     usuarios_dados = [];
     total_comentaristas = 0;
@@ -389,7 +486,10 @@ export default function Home() {
     const chance = Chance();
 
     if (quantidade_de_sorteados > candidatos_elegiveis) {
-      alert("Número de sorteados é maior do que a lista de candidatos!");
+      alert(
+        "Número de sorteados é maior do que" +
+          " a lista de candidatos elegíveis!"
+      );
     } else {
       while (true) {
         const sorteado = chance.weighted(candidatos, pesos);
@@ -402,7 +502,7 @@ export default function Home() {
     sorteados = [];
   };
 
-  const lidar_com_clique = (event) => {
+  const lidar_com_clique = () => {
     set_modo("local");
     input_escondido.current.click();
   };
@@ -416,19 +516,115 @@ export default function Home() {
   const baixar_arquivo = () => {
     download(JSON.stringify(usuarios, null, 4), "candidatos.json");
   };
-  //       opções avançadas: lite: qtd likes, comentarios, etc...
+
+  const mudar_precisao = (event) => {
+    const novos_atributos = {
+      likes: "99",
+      comentarios: "999",
+      inscritos: "999",
+      vip: "99",
+    };
+    switch (event.target.value) {
+      case "Muito Alta":
+        novos_atributos.likes = "99";
+        novos_atributos.comentarios = "999";
+        novos_atributos.inscritos = "999";
+        novos_atributos.vip = "99";
+        break;
+
+      case "Alta":
+        novos_atributos.likes = "50";
+        novos_atributos.comentarios = "500";
+        novos_atributos.inscritos = "500";
+        novos_atributos.vip = "50";
+        break;
+
+      case "Média":
+        novos_atributos.likes = "25";
+        novos_atributos.comentarios = "250";
+        novos_atributos.inscritos = "250";
+        novos_atributos.vip = "25";
+        break;
+
+      case "Baixa":
+        novos_atributos.likes = "9";
+        novos_atributos.comentarios = "99";
+        novos_atributos.inscritos = "99";
+        novos_atributos.vip = "9";
+        break;
+
+      case "Muito Baixa":
+        novos_atributos.likes = "2";
+        novos_atributos.comentarios = "2";
+        novos_atributos.inscritos = "2";
+        novos_atributos.vip = "2";
+        break;
+
+      default:
+        novos_atributos.likes = "99";
+        novos_atributos.comentarios = "999";
+        novos_atributos.inscritos = "999";
+        novos_atributos.vip = "99";
+        break;
+    }
+
+    set_atributos_precisao(novos_atributos);
+  };
+
+  const mudar_indice = (operacao) => {
+    if (operacao == "+") {
+      if (indice_vencedor < sorteados_final.length - 1) {
+        set_foto(spinner_gif);
+        set_indice_vencedor(indice_vencedor + 1);
+      }
+    }
+
+    if (operacao == "-") {
+      if (indice_vencedor - 1 >= 0) {
+        set_foto(spinner_gif);
+        set_indice_vencedor(indice_vencedor - 1);
+      }
+    }
+  };
+
+  const mudar_foto = (src) => {
+    if (src) {
+      set_foto(src);
+    } else {
+      set_foto(sem_foto);
+    }
+  };
+
+  const devo_sortear = () => {
+    const valor = input_sorteados;
+
+    if (!valor || valor == "0") {
+      alert("Valor nulo não permitido.");
+      set_input_sorteados(3);
+      return;
+    }
+
+    if (typeof parseInt(valor) != "number") {
+      alert(
+        "Campo de quantidade de sorteados " +
+          "só pode receber valores inteiros maiores " +
+          "que zero. "
+      );
+      set_input_sorteados(3);
+    } else {
+      set_indice_vencedor(0);
+      sortear();
+      accordion_candidatos_ref.current.click();
+    }
+  };
 
   return (
-    <div
-      style={{
-        background: cor_primaria,
-      }}
-    >
+    <div>
       <Head>
         <title>Sorteador</title>
         <meta
           name="description"
-          content="Sorteador | Utilitário para sorteios com peso"
+          content="Sorteador COS.TV | Utilitário para sorteios com peso"
         />
         <link
           about="icon from freepik and flaticon"
@@ -451,13 +647,17 @@ export default function Home() {
           </Navbar.Brand>
         </Navbar>
 
-        <Container>
+        <Container id="card-principal">
           <h4>Sorteador COS.TV</h4>
           <div>
             <Accordion defaultActiveKey="0">
-              <Card style={{marginLeft: 0}} id="colapso">
+              <Card style={{ marginLeft: 0 }} id="colapso">
                 <Card.Header id="colapso">
-                  <Accordion.Toggle as={"h6"} eventKey="1" ref={accordion_ref}>
+                  <Accordion.Toggle
+                    as={"h6"}
+                    eventKey="1"
+                    ref={accordion_info_ref}
+                  >
                     <h6
                       style={{
                         background: cor_terciaria,
@@ -467,7 +667,7 @@ export default function Home() {
                         borderRadius: "1.2vh",
                         width: "300px",
                         textAlign: "center",
-                        fontSize: "1.2rem"
+                        fontSize: "1.2rem",
                       }}
                     >
                       Preencha as informações
@@ -476,6 +676,18 @@ export default function Home() {
                 </Card.Header>
                 <Accordion.Collapse eventKey="1">
                   <Card.Body id="colapso" style={{ paddingTop: 0 }}>
+                    <label htmlFor="precisao">Precisão</label>
+                    <select
+                      onChange={mudar_precisao}
+                      name="precisao"
+                      id="select"
+                    >
+                      <option value="Muito Alta">Muito Alta</option>
+                      <option value="Alta">Alta</option>
+                      <option value="Média">Média</option>
+                      <option value="Baixa">Baixa</option>
+                      <option value="Muito Baixa">Muito Baixa</option>
+                    </select>
                     <label>ID do vídeo</label>
                     <input
                       type="text"
@@ -496,6 +708,64 @@ export default function Home() {
                       }
                       style={{ color: "black" }}
                     />
+                    <div id="criterios-moveis">
+                      <div id="criterios">
+                        <div id="quebra-linha">
+                          <input
+                            type="checkbox"
+                            defaultChecked
+                            onChange={() => {
+                              set_criterios({
+                                ...criterios,
+                                like: !criterios.like,
+                              });
+                            }}
+                          />
+                          <label>Like</label>
+                        </div>
+                        <div id="quebra-linha">
+                          <input
+                            type="checkbox"
+                            defaultChecked
+                            onChange={() => {
+                              set_criterios({
+                                ...criterios,
+                                segue: !criterios.segue,
+                              });
+                            }}
+                          />
+                          <label>Segue</label>
+                        </div>
+                      </div>
+                      <div id="criterios">
+                        <div id="quebra-linha">
+                          <input
+                            type="checkbox"
+                            defaultChecked
+                            onChange={() => {
+                              set_criterios({
+                                ...criterios,
+                                comentou: !criterios.comentou,
+                              });
+                            }}
+                          />
+                          <label>#dudabra</label>
+                        </div>
+                        <div id="quebra-linha">
+                          <input
+                            type="checkbox"
+                            defaultChecked
+                            onChange={() => {
+                              set_criterios({
+                                ...criterios,
+                                nome_valido: !criterios.nome_valido,
+                              });
+                            }}
+                          />
+                          <label>Nome Válido</label>
+                        </div>
+                      </div>
+                    </div>
                     <div
                       style={{
                         display: "flex",
@@ -510,7 +780,7 @@ export default function Home() {
                           marginRight: "10px",
                         }}
                         onClick={() => {
-                          accordion_ref.current.click();
+                          accordion_info_ref.current.click();
                           executar_tudo();
                         }}
                       >
@@ -533,7 +803,7 @@ export default function Home() {
                           borderColor: cor_terciaria,
                         }}
                         onClick={() => {
-                          accordion_ref.current.click();
+                          accordion_info_ref.current.click();
                           lidar_com_clique();
                         }}
                       >
@@ -544,6 +814,51 @@ export default function Home() {
                 </Accordion.Collapse>
               </Card>
             </Accordion>
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+              }}
+            >
+              {log ? (
+                <div>
+                  <p
+                    id="centralizar"
+                    className="log"
+                    style={{ marginTop: "10px", display: "inline" }}
+                  >
+                    {log}
+                    {""}
+                  </p>
+                  {""}
+                  {status_progresso > 0 ? (
+                    <div style={{ display: "block" }}>
+                      <ProgressBar
+                        style={{
+                          width: "300px",
+                        }}
+                        id="barra"
+                        animated
+                        now={status_progresso * 100}
+                      />
+                    </div>
+                  ) : (
+                    <Spinner
+                      id="spinner-custom"
+                      style={{
+                        marginLeft: "7px",
+                        width: "25px",
+                        height: "25px",
+                        color: cor_terciaria,
+                      }}
+                      animation="border"
+                      as="span"
+                    />
+                  )}
+                </div>
+              ) : null}
+            </div>
             <div>
               {usuarios[0] ? (
                 <>
@@ -553,7 +868,7 @@ export default function Home() {
                         <Accordion.Toggle
                           as={"h5"}
                           eventKey="1"
-                          ref={accordion_ref}
+                          ref={accordion_candidatos_ref}
                         >
                           <h5
                             id="centralizar"
@@ -612,6 +927,8 @@ export default function Home() {
                                             {`${usuario.mensagem
                                               .join(",")
                                               .replace(/,/g, ", ")}`}
+                                            <br/>
+                                            { `Tickets: ${usuario.tickets}`}
                                           </Card.Body>
                                         </Accordion.Collapse>
                                       </Card>
@@ -621,115 +938,88 @@ export default function Home() {
                               ))}
                             </ListGroup>
                           </div>
-                        </Card.Body>
-                      </Accordion.Collapse>
-                    </Card>
-                  </Accordion>
-
-                  <Accordion defaultActiveKey="1">
-                    <Card id="colapso">
-                      <Card.Header id="colapso">
-                        <Accordion.Toggle
-                          as={"h5"}
-                          eventKey="1"
-                          ref={accordion_ref}
-                        >
-                          <h5
-                            id="centralizar"
-                            style={{
-                              background: "rgba(0,0,0,0)",
-                              borderColor: cor_terciaria,
-                              padding: "10px",
-                              border: "1px solid #00ffc3",
-                              borderRadius: "1.2vh",
-                              width: "300px",
-                              textAlign: "center",
-                            }}
+                          <Accordion
+                            style={{ width: "300px" }}
+                            defaultActiveKey="1"
                           >
-                            Informações de Sorteio
-                          </h5>
-                        </Accordion.Toggle>
-                      </Card.Header>
-                      <Accordion.Collapse eventKey="1">
-                        <Card.Body id="colapso" style={{ paddingTop: 0 }}>
-                          <div>
-                            <div id="quantidade_sorteados">
-                              <label>Quantidade de Sorteados</label>
-                              <input
-                                type="number"
-                                name="quantity"
-                                value={input_sorteados}
-                                onInput={(event) =>
-                                  set_input_sorteados(
-                                    parseInt(event.target.value)
-                                  )
-                                }
-                                min={1}
-                                style={{ color: "black" }}
-                              />
-                            </div>
+                            <Card id="colapso">
+                              <Card.Header id="colapso">
+                                <Accordion.Toggle
+                                  as={"h5"}
+                                  eventKey="1"
+                                  ref={accordion_sorteio_ref}
+                                >
+                                  <h5
+                                    id="centralizar"
+                                    style={{
+                                      background: "rgba(0,0,0,0)",
+                                      borderColor: cor_terciaria,
+                                      padding: "10px",
+                                      border: "1px solid #00ffc3",
+                                      borderRadius: "1.2vh",
+                                      width: "300px",
+                                      textAlign: "center",
+                                    }}
+                                  >
+                                    Informações de Sorteio
+                                  </h5>
+                                </Accordion.Toggle>
+                              </Card.Header>
+                              <Accordion.Collapse eventKey="1">
+                                <Card.Body
+                                  id="colapso"
+                                  style={{ paddingTop: 0 }}
+                                >
+                                  <div>
+                                    <div id="quantidade_sorteados">
+                                      <label>Quantidade de Sorteados</label>
+                                      <input
+                                        type="number"
+                                        name="quantity"
+                                        value={input_sorteados}
+                                        onInput={(event) =>
+                                          set_input_sorteados(
+                                            parseInt(event.target.value)
+                                          )
+                                        }
+                                        min={1}
+                                        style={{ color: "black" }}
+                                      />
+                                    </div>
 
-                            <div id="botao-sortear">
-                              <Button
-                                style={{
-                                  background: cor_terciaria,
-                                  borderColor: cor_terciaria,
-                                  marginTop: "10px",
-                                  paddingRight: "20px",
-                                }}
-                                onClick={() => {
-                                  sortear();
-                                  accordion_ref.current.click();
-                                }}
-                              >
-                                Sortear
-                              </Button>
-                              <Button
-                                style={{
-                                  background: cor_terciaria,
-                                  borderColor: cor_terciaria,
-                                  marginTop: "10px",
-                                  marginLeft: "10px",
-                                }}
-                                onClick={baixar_arquivo}
-                              >
-                                Baixar Arquivo
-                              </Button>
-                            </div>
-                          </div>
+                                    <div id="botao-sortear">
+                                      <Button
+                                        style={{
+                                          background: cor_terciaria,
+                                          borderColor: cor_terciaria,
+                                          marginTop: "10px",
+                                          paddingRight: "20px",
+                                        }}
+                                        onClick={devo_sortear}
+                                      >
+                                        Sortear
+                                      </Button>
+                                      <Button
+                                        style={{
+                                          background: cor_terciaria,
+                                          borderColor: cor_terciaria,
+                                          marginTop: "10px",
+                                          marginLeft: "10px",
+                                        }}
+                                        onClick={baixar_arquivo}
+                                      >
+                                        Baixar Arquivo
+                                      </Button>
+                                    </div>
+                                  </div>
+                                </Card.Body>
+                              </Accordion.Collapse>
+                            </Card>
+                          </Accordion>
                         </Card.Body>
                       </Accordion.Collapse>
                     </Card>
                   </Accordion>
-                </>
-              ) : null}
-
-              {log ? (
-                <>
-                  <p style={{ marginTop: "10px", display: "inline" }}>
-                    {log}
-                    {""}
-                  </p>
-                  {""}
-                  {status_progresso > 0 ? (
-                    <ProgressBar
-                      id="barra"
-                      animated
-                      now={status_progresso * 100}
-                    />
-                  ) : (
-                    <Spinner
-                      style={{
-                        marginLeft: "7px",
-                        marginTop: "10px",
-                        width: "25px",
-                        height: "25px",
-                        color: cor_terciaria,
-                      }}
-                      animation="border"
-                      as="span"
-                    />
-                  )}
                 </>
               ) : null}
             </div>
@@ -739,7 +1029,7 @@ export default function Home() {
             <Accordion defaultActiveKey="1">
               <Card id="colapso">
                 <Card.Header id="colapso">
-                  <Accordion.Toggle as={"h5"} eventKey="1" ref={accordion_ref}>
+                  <Accordion.Toggle as={"h5"} eventKey="1">
                     <h5
                       id="centralizar"
                       style={{
@@ -761,45 +1051,74 @@ export default function Home() {
                     <>
                       <div
                         style={{
-                          overflowY: "scroll",
-                          height: "24vh",
+                          width: "50vw",
                           border: `2px solid ${cor_terciaria}`,
-                          scrollbarWidth: "none",
                         }}
                         id="sorteados"
                       >
-                        {sorteados_final.map((sorteado, indice) => (
-                          <div key={sorteado.id * indice}>
-                            <ListGroup>
-                              <ListGroup.Item
-                                key={sorteado.id * indice * indice}
-                                style={{
-                                  background: cor_secundaria,
-                                  color: "white",
+                        <section id="vencedor">
+                          <div id="cabecalho-vencedor">
+                            <div id="imagem">
+                              <Image
+                                width={70}
+                                height={70}
+                                src={foto}
+                                onLoad={() => {
+                                  mudar_foto(
+                                    sorteados_final[indice_vencedor].foto
+                                  );
                                 }}
+                              />
+                            </div>
+                            <span>
+                              <a
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={
+                                  `https://cos.tv/channel/` +
+                                  `${sorteados_final[indice_vencedor].id}`
+                                }
                               >
-                                <Accordion defaultActiveKey="0">
-                                  <Card id="transparente">
-                                    <Card.Header id="transparente">
-                                      <Accordion.Toggle
-                                        as={"span"}
-                                        eventKey="1"
-                                      >
-                                        <span id="posicao">{`#${
-                                          indice + 1
-                                        }`}</span>{" "}
-                                        <span id="nome">{`${sorteado.nome}`}</span>
-                                      </Accordion.Toggle>
-                                    </Card.Header>
-                                    <Accordion.Collapse eventKey="1">
-                                      <Card.Body id="transparente">{`Tickets: ${sorteado.tickets}`}</Card.Body>
-                                    </Accordion.Collapse>
-                                  </Card>
-                                </Accordion>
-                              </ListGroup.Item>
-                            </ListGroup>
+                                {sorteados_final[indice_vencedor].nome}
+                              </a>
+                            </span>
                           </div>
-                        ))}
+                          <p>
+                            {sorteados_final[indice_vencedor].comentario[0]
+                              ? sorteados_final[indice_vencedor].comentario[0]
+                                  .length <= 100
+                                ? sorteados_final[indice_vencedor].comentario[0]
+                                : sorteados_final[
+                                    indice_vencedor
+                                  ].comentario[0].substring(0, 100) + "..."
+                              : "{Nenhum Comentário}"}
+                          </p>
+                          <p>{`Tickets: ${sorteados_final[indice_vencedor].tickets}`}</p>
+                        </section>
+                      </div>
+                      <div
+                        id="vencedor"
+                        style={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          width: "100%",
+                          marginTop: "7px",
+                        }}
+                      >
+                        <button
+                          onClick={() => {
+                            mudar_indice("-");
+                          }}
+                        >
+                          {"<<"}
+                        </button>
+                        <button
+                          onClick={() => {
+                            mudar_indice("+");
+                          }}
+                        >
+                          {">>"}
+                        </button>
                       </div>
                     </>
                   </Card.Body>
@@ -809,8 +1128,6 @@ export default function Home() {
           ) : null}
         </Container>
       </main>
-
-      <footer></footer>
     </div>
   );
 }
