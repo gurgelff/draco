@@ -109,6 +109,11 @@ h6 {
     margin: 5px 10px;
 }
 
+#vencedor a {
+    text-decoration: none;
+    color: white;
+}
+
 #vencedor button {
     border: 1px solid #00ffc3 !important;
     background: none;

@@ -117,7 +117,7 @@ export default function Home() {
                 deu_like: false,
                 comentou: true,
                 nome_valido: false,
-                comentario: comentador.content,
+                comentario: [comentador.content],
                 foto: comentador.user.avatar,
                 mensagem: [],
               };
@@ -125,6 +125,7 @@ export default function Home() {
               total_comentaristas += 1;
             } else {
               usuarios_dados[indice].comentou = true;
+              usuarios_dados[indice].comentario.push(comentador.content);
             }
           }
           set_log("Finalizada a obtenção de comentários");
@@ -281,45 +282,54 @@ export default function Home() {
           let invalido = false;
           const indice = usuarios_dados.indexOf(usuario);
 
-          // se seguir for um critério exigido
-          if (criterios.segue) {
-            // e o usuário não safistazer esse critério
-            if (!usuario.segue) {
-              invalido = true;
-              usuarios_dados[indice].mensagem.push(" Não segue");
-            } else {
-              usuarios_dados[indice].tickets += 1;
-            }
-          }
-
-          if (criterios.like) {
-            if (!usuario.deu_like) {
-              invalido = true;
-              usuarios_dados[indice].mensagem.push(" Não deu like");
-            } else {
-              usuarios_dados[indice].tickets += 1;
-            }
-          }
-
-          if (criterios.comentou) {
-            if (!usuario.comentou) {
-              invalido = true;
-              usuarios_dados[indice].mensagem.push(" Não comentou");
-            } else {
-              usuarios_dados[indice].tickets += 1;
-            }
-          }
-
+          // se ter nome válido for um critério exigido
           if (criterios.nome_valido) {
+            // e o usuário não safistazer esse critério
             if (!usuario.nome_valido) {
-              invalido = true; //mensagem de nome inválido já aplicada
+              invalido = true; // descarte-o
+            }
+          }
+
+          if (criterios.comentou && !invalido) {
+            let comentou_hashtag = false;
+            for (const comentario of usuario.comentario) {
+              if (comentario.toLowerCase().includes("#dudabra")) {
+                comentou_hashtag = true;
+              }
+            }
+
+            if (!comentou_hashtag) {
+              invalido = true;
+              usuarios_dados[indice].mensagem.push(" Não comentou #dudabra");
             } else {
               usuarios_dados[indice].tickets += 1;
             }
           }
 
+          // se não estiver inválido, checar condições
           if (!invalido) {
-            usuarios_dados[indice].mensagem.push(" Ok");
+
+            if (criterios.segue) {
+              if (!usuario.segue) {
+                invalido = true;
+                usuarios_dados[indice].mensagem.push(" Não segue");
+              } else {
+                usuarios_dados[indice].tickets += 1;
+              }
+            }
+
+            if (criterios.like) {
+              if (!usuario.deu_like) {
+                invalido = true;
+                usuarios_dados[indice].mensagem.push(" Não deu like");
+              } else {
+                usuarios_dados[indice].tickets += 1;
+              }
+            }
+
+            if (!invalido) {
+              usuarios_dados[indice].mensagem.push(" Ok");
+            }
           }
         }
         resolve(usuarios_dados);
@@ -346,6 +356,7 @@ export default function Home() {
 
           for (const vip of resposta_gift_votes.data.data.reward_rank) {
             let ja_existe = false;
+            let invalido = false;
             let indice = 0;
 
             for (const usuario of usuarios_dados) {
@@ -359,7 +370,7 @@ export default function Home() {
               let vip_estruturado = {
                 nome: vip.nickname,
                 id: vip.uid,
-                tickets: parseInt(vip.score),
+                tickets: 0,
                 segue: false,
                 deu_like: false,
                 comentou: false,
@@ -370,8 +381,39 @@ export default function Home() {
               vip_estruturado.mensagem.push(" Fez doação apenas");
               usuarios_dados.push(vip_estruturado);
             } else {
-              usuarios_dados[indice].tickets += parseInt(vip.score);
+              const usuario = usuarios_dados[indice];
+              // se ter nome válido for um critério exigido
+              if (criterios.nome_valido) {
+                // e o usuário não safistazer esse critério
+                if (!usuario.nome_valido) {
+                  invalido = true; // descarte-o
+                }
+              }
+
+              if (criterios.comentou && !invalido) {
+                let comentou_hashtag = false;
+                for (const comentario of usuario.comentario) {
+                  if (comentario.toLowerCase().includes("#dudabra")) {
+                    comentou_hashtag = true;
+                  }
+                }
+
+                if (!comentou_hashtag) {
+                  invalido = true;
+                  usuarios_dados[indice].mensagem.push(
+                    " Não comentou #dudabra"
+                  );
+                } else {
+                  usuarios_dados[indice].tickets += 1;
+                }
+              }
+
+              if (!invalido) {
+                usuarios_dados[indice].tickets += parseInt(vip.score);
+              }
+
               usuarios_dados[indice].mensagem.push(" Fez doação");
+
             }
           }
           resolve(usuarios_dados);
@@ -554,10 +596,7 @@ export default function Home() {
     } else {
       set_foto(sem_foto);
     }
-  }
-
-  //@TODO: botão de avançar/voltar << >>
-  //@TODO: adicionar heurística - 1 sorteado por vez
+  };
 
   //@TODO: invalidar nome invalido e hashtag
 
@@ -684,7 +723,7 @@ export default function Home() {
                         <div id="uebra-linha">
                           <input
                             type="checkbox"
-                            checked
+                            defaultChecked
                             onChange={() => {
                               set_criterios({
                                 ...criterios,
@@ -692,7 +731,7 @@ export default function Home() {
                               });
                             }}
                           />
-                          <label>Comentou</label>
+                          <label>#dudabra</label>
                         </div>
                         <div id="uebra-linha">
                           <input
@@ -1015,7 +1054,6 @@ export default function Home() {
                     <>
                       <div
                         style={{
-                          height: "24vh",
                           width: "50vw",
                           border: `2px solid ${cor_terciaria}`,
                         }}
@@ -1029,20 +1067,34 @@ export default function Home() {
                                 height={70}
                                 src={foto}
                                 onLoad={() => {
-                                  mudar_foto(sorteados_final[indice_vencedor].foto)
+                                  mudar_foto(
+                                    sorteados_final[indice_vencedor].foto
+                                  );
                                 }}
                               />
                             </div>
-                            <span>{sorteados_final[indice_vencedor].nome}</span>
+                            <span>
+                              <a
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                href={
+                                  `https://cos.tv/channel/` +
+                                  `${sorteados_final[indice_vencedor].id}`
+                                }
+                              >
+                                {sorteados_final[indice_vencedor].nome}
+                              </a>
+                            </span>
                           </div>
                           <p>
-                            {sorteados_final[indice_vencedor].comentario
+                            {sorteados_final[indice_vencedor].comentario[0]
                               .length <= 100
-                              ? sorteados_final[indice_vencedor].comentario
+                              ? sorteados_final[indice_vencedor].comentario[0]
                               : sorteados_final[
                                   indice_vencedor
-                                ].comentario.substring(0, 100) + "..."}
+                                ].comentario[0].substring(0, 100) + "..."}
                           </p>
+                          <p>{`Tickets: ${sorteados_final[indice_vencedor].tickets}`}</p>
                         </section>
                       </div>
                       <div
