@@ -2,6 +2,16 @@
     color: white;
 }
 
+#teste {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1;
+}
+
 body {
     background: #1E6F5C !important;
 }
@@ -29,6 +39,25 @@ input {
     text-align: center;
     display: flex;
     flex-direction: column;
+}
+
+footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 0;
+    margin-top: 10px;
+    background: #212529;
+
+}
+
+footer a {
+    text-decoration: none;
+    color: #1E6F5C;
+}
+
+footer a:hover {
+    color: #00ffc3;
 }
 
 #logo {
@@ -167,6 +196,14 @@ h6 {
         justify-content: start !important;
     }
 
+    footer {
+        font-size: 0.7rem;
+        padding: 1px 0;
+        margin-top: 10px;
+        background: #212529;
+
+    }
+
     #card-principal {
         border: none;
         width: 100vw;
@@ -272,7 +309,8 @@ h6 {
         width: 210px !important;
     }
 
-    label, select {
+    label,
+    select {
         font-size: 0.7rem !important;
     }
 

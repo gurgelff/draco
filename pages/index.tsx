@@ -619,7 +619,7 @@ export default function Home() {
   };
 
   return (
-    <div>
+    <div id="teste">
       <Head>
         <title>Sorteador</title>
         <meta
@@ -926,8 +926,8 @@ export default function Home() {
                                             {`${usuario.mensagem
                                               .join(",")
                                               .replace(/,/g, ", ")}`}
-                                            <br/>
-                                            { `Tickets: ${usuario.tickets}`}
+                                            <br />
+                                            {`Tickets: ${usuario.tickets}`}
                                           </Card.Body>
                                         </Accordion.Collapse>
                                       </Card>
@@ -1127,6 +1127,9 @@ export default function Home() {
           ) : null}
         </Container>
       </main>
+      <footer>
+      <span>© {" "}<a href="https://gurgeltech.com/"> GurgelTech </a>{" "} 2021</span>
+      </footer>
     </div>
   );
 }
