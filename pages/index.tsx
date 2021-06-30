@@ -1128,7 +1128,7 @@ export default function Home() {
         </Container>
       </main>
       <footer>
-      <span>© {" "}<a href="https://gurgeltech.com/"> GurgelTech </a>{" "} 2021</span>
+      <span>© <a href="https://gurgeltech.com/"> GurgelTech </a> 2021</span>
       </footer>
     </div>
   );
