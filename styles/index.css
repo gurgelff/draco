@@ -67,7 +67,7 @@ footer a:hover {
 }
 
 #card-principal {
-    border: 2px solid black;
+    border: 2px solid #00ffc3;
     width: 500px;
     margin-top: 10px;
     display: flex;
