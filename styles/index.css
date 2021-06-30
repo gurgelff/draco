@@ -156,7 +156,7 @@ h6 {
 }
 
 
-
+/**************************MOBILE*****************************/
 @media (max-width: 500px) {
 
     h4 {
@@ -182,7 +182,10 @@ h6 {
     #candidatos {
         font-size: 0.8rem;
         flex-direction: column;
-        width: 80vw !important;
+    }
+
+    #sorteados {
+        width: 300px !important;
     }
 
     #colapso {
@@ -214,11 +217,9 @@ h6 {
     }
 }
 
-@media (max-height: 600px) {
+/*********************Condições especiais***********************/
 
-    #sorteados {
-        height: 32vh !important;
-    }
+@media (max-height: 600px) {
 
     label {
         justify-content: start !important;
@@ -245,6 +246,8 @@ h6 {
     }
 }
 
+/**************************SMALL MOBILE*****************************/
+
 @media (max-width: 320px) {
     h4 {
         font-size: 1.2rem !important;
@@ -260,6 +263,10 @@ h6 {
         font-size: 0.9rem;
     }
 
+    #sorteados {
+        width: 210px !important;
+        font-size: 0.7rem;
+    }
 
     #nome,
     #posicao {

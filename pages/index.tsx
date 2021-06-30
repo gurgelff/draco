@@ -896,7 +896,6 @@ export default function Home() {
                               border: `2px solid ${cor_terciaria}`,
                               scrollbarWidth: "none",
                             }}
-                            id="centralizar"
                           >
                             <ListGroup id="candidatos">
                               {usuarios.map((usuario) => (
