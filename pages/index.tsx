@@ -619,7 +619,7 @@ export default function Home() {
   };
 
   return (
-    <div>
+    <div id="teste">
       <Head>
         <title>Sorteador</title>
         <meta
@@ -896,7 +896,6 @@ export default function Home() {
                               border: `2px solid ${cor_terciaria}`,
                               scrollbarWidth: "none",
                             }}
-                            id="centralizar"
                           >
                             <ListGroup id="candidatos">
                               {usuarios.map((usuario) => (
@@ -927,8 +926,8 @@ export default function Home() {
                                             {`${usuario.mensagem
                                               .join(",")
                                               .replace(/,/g, ", ")}`}
-                                            <br/>
-                                            { `Tickets: ${usuario.tickets}`}
+                                            <br />
+                                            {`Tickets: ${usuario.tickets}`}
                                           </Card.Body>
                                         </Accordion.Collapse>
                                       </Card>
@@ -970,7 +969,7 @@ export default function Home() {
                                   id="colapso"
                                   style={{ paddingTop: 0 }}
                                 >
-                                  <div>
+                                  <div id="info-sorteio">
                                     <div id="quantidade_sorteados">
                                       <label>Quantidade de Sorteados</label>
                                       <input
@@ -1128,6 +1127,9 @@ export default function Home() {
           ) : null}
         </Container>
       </main>
+      <footer>
+      <span>© <a href="https://gurgeltech.com/"> GurgelTech </a> 2021</span>
+      </footer>
     </div>
   );
 }

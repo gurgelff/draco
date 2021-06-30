@@ -2,6 +2,16 @@
     color: white;
 }
 
+#teste {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+}
+
+main {
+    flex: 1;
+}
+
 body {
     background: #1E6F5C !important;
 }
@@ -31,6 +41,25 @@ input {
     flex-direction: column;
 }
 
+footer {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 0;
+    margin-top: 10px;
+    background: #212529;
+
+}
+
+footer a {
+    text-decoration: none;
+    color: #1E6F5C;
+}
+
+footer a:hover {
+    color: #00ffc3;
+}
+
 #logo {
     display: flex;
     align-items: center;
@@ -38,7 +67,7 @@ input {
 }
 
 #card-principal {
-    border: 2px solid black;
+    border: 2px solid #00ffc3;
     width: 500px;
     margin-top: 10px;
     display: flex;
@@ -156,7 +185,7 @@ h6 {
 }
 
 
-
+/**************************MOBILE*****************************/
 @media (max-width: 500px) {
 
     h4 {
@@ -165,6 +194,14 @@ h6 {
 
     label {
         justify-content: start !important;
+    }
+
+    footer {
+        font-size: 0.7rem;
+        padding: 1px 0;
+        margin-top: 10px;
+        background: #212529;
+
     }
 
     #card-principal {
@@ -182,7 +219,7 @@ h6 {
     #candidatos {
         font-size: 0.8rem;
         flex-direction: column;
-        width: 80vw !important;
+        width: 300px !important;
     }
 
     #colapso {
@@ -214,11 +251,9 @@ h6 {
     }
 }
 
-@media (max-height: 600px) {
+/*********************Condições especiais***********************/
 
-    #sorteados {
-        height: 32vh !important;
-    }
+@media (max-height: 600px) {
 
     label {
         justify-content: start !important;
@@ -245,7 +280,9 @@ h6 {
     }
 }
 
-@media (max-width: 320px) {
+/**************************SMALL MOBILE*****************************/
+
+@media (max-width: 340px) {
     h4 {
         font-size: 1.2rem !important;
     }
@@ -260,6 +297,26 @@ h6 {
         font-size: 0.9rem;
     }
 
+    #sorteados,
+    #candidatos,
+    #quantidade_sorteados,
+    #info-sorteio {
+        width: 210px !important;
+        font-size: 0.7rem;
+    }
+
+    .accordion {
+        width: 210px !important;
+    }
+
+    label,
+    select {
+        font-size: 0.7rem !important;
+    }
+
+    #info-sorteio button {
+        height: 60px;
+    }
 
     #nome,
     #posicao {
