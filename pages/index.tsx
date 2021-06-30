@@ -619,7 +619,7 @@ export default function Home() {
   };
 
   return (
-    <div id="teste">
+    <div id="container-principal">
       <Head>
         <title>Sorteador</title>
         <meta
