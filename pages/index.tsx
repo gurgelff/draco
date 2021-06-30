@@ -969,7 +969,7 @@ export default function Home() {
                                   id="colapso"
                                   style={{ paddingTop: 0 }}
                                 >
-                                  <div>
+                                  <div id="info-sorteio">
                                     <div id="quantidade_sorteados">
                                       <label>Quantidade de Sorteados</label>
                                       <input
