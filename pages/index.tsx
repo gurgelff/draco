@@ -37,8 +37,8 @@ export default function Home() {
   const [modo, set_modo] = useState("");
   const [indice_vencedor, set_indice_vencedor] = useState(0);
   const [input_sorteados, set_input_sorteados] = useState(3);
-  const [input_video_id, set_input_video_id] = useState("27716306792649728");
-  const [input_canal_id, set_input_canal_id] = useState("26984287292531712");
+  const [input_video_id, set_input_video_id] = useState("28876947070948352");
+  const [input_canal_id, set_input_canal_id] = useState("17363153098287104");
   const [foto, set_foto] = useState("/luck.svg");
   const [atributos_precisao, set_atributos_precisao] = useState({
     likes: "99",
