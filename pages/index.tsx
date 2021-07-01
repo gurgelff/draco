@@ -27,6 +27,7 @@ import Image from "next/image";
 export default function Home() {
   let usuarios_dados = [];
   let total_comentaristas = 0;
+  let total_inscritos = 0;
 
   const [usuarios, set_usuarios] = useState([]);
   const [sorteados_final, set_sorteados_final] = useState([]);
@@ -95,6 +96,7 @@ export default function Home() {
           });
 
           const lista_de_comentadores = dados_comentarios.data.data.list;
+          const comentario_top = dados_comentarios.data.data.top ?? {};
 
           for (const comentador of lista_de_comentadores) {
             let ja_existe = false;
@@ -128,6 +130,39 @@ export default function Home() {
               usuarios_dados[indice].comentario.push(comentador.content);
             }
           }
+
+          // analisa comentário fixado/top
+          if (comentario_top) { 
+             let encontrado = false;
+             for (const usuario of usuarios_dados) {
+               if (usuario.id == comentario_top.uid) {
+                 encontrado = true;
+                 const indice_top = usuarios_dados.indexOf(usuario);
+                 usuarios_dados[indice_top].comentario.push(
+                   comentario_top.content
+                 );
+                 break;
+               }
+             }
+
+             if (!encontrado) {
+               const comentador_estruturado = {
+                 nome: comentario_top.user.nickname,
+                 conta: comentario_top.user.chain_account_name,
+                 id: comentario_top.uid,
+                 tickets: 0,
+                 segue: false,
+                 deu_like: false,
+                 comentou: true,
+                 nome_valido: false,
+                 comentario: [comentario_top.content],
+                 foto: comentario_top.user.avatar,
+                 mensagem: [],
+               };
+               usuarios_dados.push(comentador_estruturado);
+             }
+          }         
+
           set_log("Finalizada a obtenção de comentários");
           resolve(usuarios_dados);
         } catch (error) {
@@ -152,6 +187,7 @@ export default function Home() {
           });
 
           const lista_de_inscritos = dados_inscritos.data.data.list;
+          total_inscritos = dados_inscritos.data.data.total;
 
           for (const inscrito of lista_de_inscritos) {
             let ja_existe = false;
@@ -426,7 +462,7 @@ export default function Home() {
   const executar_tudo = async () => {
     set_modo("API");
     set_log("Iniciando tarefas ");
-    
+
     // sempre executar
     await checar_comentarios();
 
@@ -525,6 +561,12 @@ export default function Home() {
       vip: "99",
     };
     switch (event.target.value) {
+      case "Extrema":
+        novos_atributos.likes = "99";
+        novos_atributos.comentarios = "999";
+        novos_atributos.inscritos = String(total_inscritos);
+        novos_atributos.vip = "99";
+        break;
       case "Muito Alta":
         novos_atributos.likes = "99";
         novos_atributos.comentarios = "999";
@@ -617,6 +659,12 @@ export default function Home() {
       accordion_candidatos_ref.current.click();
     }
   };
+
+  //@TODO: adicionar comentário TOP na lista
+  //@TODO: aumentar precisão de dados
+  //@TODO: readme
+  //@TODO: reestruturar em modulos
+  //@TODO: forkar e traduzir
 
   return (
     <div id="container-principal">
@@ -1128,7 +1176,9 @@ export default function Home() {
         </Container>
       </main>
       <footer>
-      <span>© <a href="https://gurgeltech.com/"> GurgelTech </a> 2021</span>
+        <span>
+          © <a href="https://gurgeltech.com/"> GurgelTech </a> 2021
+        </span>
       </footer>
     </div>
   );
