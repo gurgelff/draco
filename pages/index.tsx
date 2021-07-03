@@ -191,7 +191,7 @@ export default function Home() {
           let lista_de_inscritos = dados_inscritos.data.data.list;
           total_inscritos = dados_inscritos.data.data.total;
           
-          let quantidade_passos = Math.ceil(total_inscritos / 999);
+          let quantidade_passos = Math.ceil(total_inscritos / 999) + 1;
           let pagina = 2;
           
           if (parseInt(atributos_precisao.inscritos) < 999) {
@@ -1204,7 +1204,16 @@ export default function Home() {
       </main>
       <footer>
         <span>
-          © <a href="https://gurgeltech.com/"> GurgelTech </a> 2021
+          ©{" "}
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://gurgeltech.com/"
+          >
+            {" "}
+            GurgelTech{" "}
+          </a>{" "}
+          2021
         </span>
       </footer>
     </div>
