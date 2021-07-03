@@ -27,6 +27,7 @@ import Image from "next/image";
 export default function Home() {
   let usuarios_dados = [];
   let total_comentaristas = 0;
+  let total_inscritos = 0;
 
   const [usuarios, set_usuarios] = useState([]);
   const [sorteados_final, set_sorteados_final] = useState([]);
@@ -36,8 +37,8 @@ export default function Home() {
   const [modo, set_modo] = useState("");
   const [indice_vencedor, set_indice_vencedor] = useState(0);
   const [input_sorteados, set_input_sorteados] = useState(3);
-  const [input_video_id, set_input_video_id] = useState("27716306792649728");
-  const [input_canal_id, set_input_canal_id] = useState("26984287292531712");
+  const [input_video_id, set_input_video_id] = useState("28876947070948352");
+  const [input_canal_id, set_input_canal_id] = useState("17363153098287104");
   const [foto, set_foto] = useState("/luck.svg");
   const [atributos_precisao, set_atributos_precisao] = useState({
     likes: "99",
@@ -95,6 +96,7 @@ export default function Home() {
           });
 
           const lista_de_comentadores = dados_comentarios.data.data.list;
+          const comentario_top = dados_comentarios.data.data.top ?? {};
 
           for (const comentador of lista_de_comentadores) {
             let ja_existe = false;
@@ -128,6 +130,39 @@ export default function Home() {
               usuarios_dados[indice].comentario.push(comentador.content);
             }
           }
+
+          // analisa comentário fixado/top
+          if (comentario_top) {
+            let encontrado = false;
+            for (const usuario of usuarios_dados) {
+              if (usuario.id == comentario_top.uid) {
+                encontrado = true;
+                const indice_top = usuarios_dados.indexOf(usuario);
+                usuarios_dados[indice_top].comentario.push(
+                  comentario_top.content
+                );
+                break;
+              }
+            }
+
+            if (!encontrado) {
+              const comentador_estruturado = {
+                nome: comentario_top.user.nickname,
+                conta: comentario_top.user.chain_account_name,
+                id: comentario_top.uid,
+                tickets: 0,
+                segue: false,
+                deu_like: false,
+                comentou: true,
+                nome_valido: false,
+                comentario: [comentario_top.content],
+                foto: comentario_top.user.avatar,
+                mensagem: [],
+              };
+              usuarios_dados.push(comentador_estruturado);
+            }
+          }
+
           set_log("Finalizada a obtenção de comentários");
           resolve(usuarios_dados);
         } catch (error) {
@@ -144,45 +179,71 @@ export default function Home() {
         try {
           set_log("Obtendo inscritos ");
 
-          const dados_inscritos = await get_inscritos({
+          // requisição inicial
+          let dados_inscritos = await get_inscritos({
             params: {
               id: input_canal_id,
+              pagina: "1",
               quantidade_inscritos: atributos_precisao.inscritos,
             },
           });
 
-          const lista_de_inscritos = dados_inscritos.data.data.list;
+          let lista_de_inscritos = dados_inscritos.data.data.list;
+          total_inscritos = dados_inscritos.data.data.total;
+          
+          let quantidade_passos = Math.ceil(total_inscritos / 999) + 1;
+          let pagina = 2;
+          
+          if (parseInt(atributos_precisao.inscritos) < 999) {
+            quantidade_passos = 0;
+          }
 
-          for (const inscrito of lista_de_inscritos) {
-            let ja_existe = false;
-            let indice = 0;
+          do {
+            //bloco de mil
+            for (const inscrito of lista_de_inscritos) {
+              let ja_existe = false;
+              let indice = 0;
 
-            for (let usuario of usuarios_dados) {
-              if (inscrito.uid == usuario.id) {
-                ja_existe = true;
-                indice = usuarios_dados.indexOf(usuario);
+              for (let usuario of usuarios_dados) {
+                if (inscrito.uid == usuario.id) {
+                  ja_existe = true;
+                  indice = usuarios_dados.indexOf(usuario);
+                }
+              }
+
+              if (!ja_existe) {
+                let usuario_estruturado = {
+                  nome: inscrito.nickname,
+                  conta: "",
+                  id: inscrito.uid,
+                  tickets: 0,
+                  segue: true,
+                  deu_like: false,
+                  comentou: false,
+                  nome_valido: false,
+                  comentario: [""],
+                  foto: inscrito.avatar,
+                  mensagem: [],
+                };
+                usuarios_dados.push(usuario_estruturado);
+              } else {
+                usuarios_dados[indice].segue = true;
               }
             }
 
-            if (!ja_existe) {
-              let usuario_estruturado = {
-                nome: inscrito.nickname,
-                conta: "",
-                id: inscrito.uid,
-                tickets: 0,
-                segue: true,
-                deu_like: false,
-                comentou: false,
-                nome_valido: false,
-                comentario: [""],
-                foto: inscrito.avatar,
-                mensagem: [],
-              };
-              usuarios_dados.push(usuario_estruturado);
-            } else {
-              usuarios_dados[indice].segue = true;
-            }
-          }
+            dados_inscritos = await get_inscritos({
+              params: {
+                id: input_canal_id,
+                pagina: String(pagina),
+                quantidade_inscritos: atributos_precisao.inscritos,
+              },
+            });
+            lista_de_inscritos = dados_inscritos.data.data.list;
+
+            pagina += 1;
+
+          } while (pagina <= quantidade_passos);
+          
           set_log("Finalizada a obtenção de inscritos");
           resolve(usuarios_dados);
         } catch (error) {
@@ -426,7 +487,7 @@ export default function Home() {
   const executar_tudo = async () => {
     set_modo("API");
     set_log("Iniciando tarefas ");
-    
+
     // sempre executar
     await checar_comentarios();
 
@@ -461,6 +522,7 @@ export default function Home() {
   };
 
   const sortear = () => {
+    console.log(usuarios);
     const quantidade_de_sorteados = input_sorteados;
     let candidatos = [];
     let lista_de_usuarios;
@@ -525,6 +587,12 @@ export default function Home() {
       vip: "99",
     };
     switch (event.target.value) {
+      case "Extrema":
+        novos_atributos.likes = "99";
+        novos_atributos.comentarios = "999";
+        novos_atributos.inscritos = "999";
+        novos_atributos.vip = "99";
+        break;
       case "Muito Alta":
         novos_atributos.likes = "99";
         novos_atributos.comentarios = "999";
@@ -618,8 +686,15 @@ export default function Home() {
     }
   };
 
+  //@TODO: adicionar comentário TOP na lista
+  //@TODO: aumentar precisão de dados
+  //@TODO: aumentar precisão de dados - incluir todos os metodos
+  //@TODO: readme
+  //@TODO: reestruturar em modulos
+  //@TODO: forkar e traduzir
+
   return (
-    <div id="teste">
+    <div id="container-principal">
       <Head>
         <title>Sorteador</title>
         <meta
@@ -1128,7 +1203,18 @@ export default function Home() {
         </Container>
       </main>
       <footer>
-      <span>© <a href="https://gurgeltech.com/"> GurgelTech </a> 2021</span>
+        <span>
+          ©{" "}
+          <a
+            target="_blank"
+            rel="noopener noreferrer"
+            href="https://gurgeltech.com/"
+          >
+            {" "}
+            GurgelTech{" "}
+          </a>{" "}
+          2021
+        </span>
       </footer>
     </div>
   );
